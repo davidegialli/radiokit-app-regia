@@ -281,9 +281,13 @@ jobs:
       - name: Generate release manifest
         run: |
           mkdir -p dist
-          APK=$(ls dist/android/*.apk 2>/dev/null | head -1 || true)
-          AAB=$(ls dist/android/*.aab 2>/dev/null | head -1 || true)
-          IPA=$(ls dist/ios/*.ipa 2>/dev/null | head -1 || true)
+          # Flat-search ricorsiva: l'artifact preserva la dir tree (flutter/build/...)
+          APK=$(find dist/android -type f -name '*.apk' 2>/dev/null | head -1 || true)
+          AAB=$(find dist/android -type f -name '*.aab' 2>/dev/null | head -1 || true)
+          IPA=$(find dist/ios     -type f -name '*.ipa' 2>/dev/null | head -1 || true)
+          echo "Detected APK: $APK"
+          echo "Detected AAB: $AAB"
+          echo "Detected IPA: $IPA"
           cat > dist/latest.json <<EOF
           {
             "product": "radiokit-regia",
@@ -315,9 +319,13 @@ jobs:
           REMOTE_DIR: /var/www/radiokit.io/downloads/regia
         run: |
           ssh -i ~/.ssh/id_ed25519 "$VPS_USER@$VPS_HOST" "mkdir -p $REMOTE_DIR/v${{ steps.meta.outputs.version }}"
-          # Carica binari versionati
-          for f in dist/android/*.apk dist/android/*.aab dist/ios/*.ipa; do
-            [ -f "$f" ] && scp -i ~/.ssh/id_ed25519 "$f" "$VPS_USER@$VPS_HOST:$REMOTE_DIR/v${{ steps.meta.outputs.version }}/"
+          # Carica binari versionati — find ricorsivo perché l'artifact preserva la dir tree.
+          # Rinomina al volo a nome canonico (radiokit_regia.apk/.aab/.ipa) per URL stabili.
+          find dist -type f \( -name '*.apk' -o -name '*.aab' -o -name '*.ipa' \) | while read f; do
+            ext="${f##*.}"
+            target="radiokit_regia.${ext}"
+            scp -i ~/.ssh/id_ed25519 "$f" "$VPS_USER@$VPS_HOST:$REMOTE_DIR/v${{ steps.meta.outputs.version }}/$target"
+            echo "Uploaded: $f → $target"
           done
           # Manifest sempre aggiornato a /latest.json
           scp -i ~/.ssh/id_ed25519 dist/latest.json "$VPS_USER@$VPS_HOST:$REMOTE_DIR/latest.json"
