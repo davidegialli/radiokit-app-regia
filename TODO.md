@@ -211,8 +211,10 @@ Se vorremo aggiungere comandi mic.mute / mic.volume / live.start, va creato un m
 
 ## Memoria sessioni recenti
 
-- 02/05/2026: scaffold completo Regia + bridge Timer + API VPS + sito beta DRY refactor
-  → vedi `memory/sessione-2026-05-01.md` (estesa al 02/05)
+- 01/05/2026: scaffold completo Regia + bridge Timer + API VPS + sito beta DRY refactor
+- **02/05/2026**: API RadioBOSS complete (73 handler), heartbeat ricco, fix TRACK/Playback,
+  pattern universale "conferma reale". Backend 100% funzionante. **Phase 4 (UI app) = next session.**
+  → vedi `memory/sessione-2026-05-02.md`
 
 ## Repos
 
