@@ -52,6 +52,19 @@ jobs:
             test('placeholder', () { expect(1 + 1, 2); });
           }
           EOF
+          # Bump Kotlin Gradle plugin: il template Flutter 3.22 usa 1.7.10
+          # ma le moderne androidx (annotation-jvm 1.9.1+) richiedono 1.9+.
+          if [ -f android/settings.gradle ]; then
+            sed -i -E 's#("org\.jetbrains\.kotlin\.android"\s+version\s+")[0-9.]+(")#\11.9.22\2#' android/settings.gradle
+            echo "--- patched android/settings.gradle ---"
+            grep -E "kotlin\.android" android/settings.gradle || true
+          fi
+          # SDK levels coerenti con le deps moderne
+          if [ -f android/app/build.gradle ]; then
+            sed -i -E 's#compileSdkVersion\s+[0-9]+#compileSdkVersion 34#' android/app/build.gradle
+            sed -i -E 's#targetSdkVersion\s+[0-9]+#targetSdkVersion 34#' android/app/build.gradle
+            sed -i -E 's#minSdkVersion\s+[a-zA-Z0-9.]+#minSdkVersion 23#' android/app/build.gradle
+          fi
 
       - run: flutter pub get
       - run: flutter analyze --no-fatal-infos
