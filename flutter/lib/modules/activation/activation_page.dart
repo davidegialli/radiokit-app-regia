@@ -99,7 +99,9 @@ class ActivationPage extends GetView<ActivationController> {
                         border: Border.all(color: AppColors.hairlineSoft),
                       ),
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                      child: Obx(() => TextField(
+                      // No Obx qui: il TextField gestisce il suo testo da solo,
+                      // non deve essere ri-buildato quando cambia keyText.
+                      child: TextField(
                         onChanged: (v) => controller.keyText.value = v,
                         keyboardType: TextInputType.visiblePassword,
                         autocorrect: false,
@@ -118,9 +120,9 @@ class ActivationPage extends GetView<ActivationController> {
                           fontWeight: FontWeight.w500,
                         ),
                         textAlign: TextAlign.center,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           hintText: 'RK-XXXX-XXXX-XXXX-XXXX',
-                          hintStyle: const TextStyle(
+                          hintStyle: TextStyle(
                             fontFamily: 'GeistMono',
                             fontSize: 14,
                             color: AppColors.text4,
@@ -132,7 +134,7 @@ class ActivationPage extends GetView<ActivationController> {
                           contentPadding: EdgeInsets.zero,
                           isDense: true,
                         ),
-                      )),
+                      ),
                     ),
                     const SizedBox(height: 8),
                     const Text(
