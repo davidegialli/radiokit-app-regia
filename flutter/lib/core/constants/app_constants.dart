@@ -9,9 +9,12 @@ class AppConstants {
   static const String apiBaseUrl = 'https://radiokit.io/api/regia/';
   static const String wsBaseUrl  = 'wss://radiokit.io/api/regia/stream';
 
-  // Sistema chiavi zero-config — prefisso prodotto Regia
+  // Sistema chiavi: accetta RK-, RKR-, RKT-, RKM-
+  // (il VPS valida che la chiave sia abilitata per Regia)
   static const String keyPrefix = 'RKR-';
-  static final RegExp keyRegex  = RegExp(r'^RKR-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$');
+  static final RegExp keyRegex  = RegExp(
+    r'^(RK-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}|RK[RTM]-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4})$'
+  );
 
   // OneSignal — App ID dedicato RadioKit Regia (da creare in dashboard).
   // Placeholder finché non viene creata l'app dedicata.
