@@ -318,7 +318,9 @@ jobs:
           mkdir -p ~/.ssh
           echo "$SSH_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -H ${{ secrets.RADIOKIT_VPS_HOST }} >> ~/.ssh/known_hosts
+          # ssh-keyscan può fallire (rate-limit, firewall) — usiamo
+          # StrictHostKeyChecking=no nelle SSH command sotto invece.
+          ssh-keyscan -H "${{ secrets.RADIOKIT_VPS_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null || true
 
       - name: Upload to VPS
         env:
@@ -326,19 +328,16 @@ jobs:
           VPS_HOST: ${{ secrets.RADIOKIT_VPS_HOST }}
           REMOTE_DIR: /var/www/radiokit.io/downloads/regia
         run: |
-          ssh -i ~/.ssh/id_ed25519 "$VPS_USER@$VPS_HOST" "mkdir -p $REMOTE_DIR/v${{ steps.meta.outputs.version }}"
-          # Carica binari versionati — find ricorsivo perché l'artifact preserva la dir tree.
-          # Rinomina al volo a nome canonico (radiokit_regia.apk/.aab/.ipa) per URL stabili.
+          SSH_OPTS="-i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR"
+          ssh $SSH_OPTS "$VPS_USER@$VPS_HOST" "mkdir -p $REMOTE_DIR/v${{ steps.meta.outputs.version }}"
           find dist -type f \( -name '*.apk' -o -name '*.aab' -o -name '*.ipa' \) | while read f; do
             ext="${f##*.}"
             target="radiokit_regia.${ext}"
-            scp -i ~/.ssh/id_ed25519 "$f" "$VPS_USER@$VPS_HOST:$REMOTE_DIR/v${{ steps.meta.outputs.version }}/$target"
+            scp $SSH_OPTS "$f" "$VPS_USER@$VPS_HOST:$REMOTE_DIR/v${{ steps.meta.outputs.version }}/$target"
             echo "Uploaded: $f → $target"
           done
-          # Manifest sempre aggiornato a /latest.json
-          scp -i ~/.ssh/id_ed25519 dist/latest.json "$VPS_USER@$VPS_HOST:$REMOTE_DIR/latest.json"
-          # Symlink "latest" → ultima versione (per URL stabili)
-          ssh -i ~/.ssh/id_ed25519 "$VPS_USER@$VPS_HOST" \
+          scp $SSH_OPTS dist/latest.json "$VPS_USER@$VPS_HOST:$REMOTE_DIR/latest.json"
+          ssh $SSH_OPTS "$VPS_USER@$VPS_HOST" \
             "cd $REMOTE_DIR && ln -sfn v${{ steps.meta.outputs.version }} latest"
           echo "✅ Deploy v${{ steps.meta.outputs.version }} (${{ steps.meta.outputs.channel }}) completato"
 
@@ -347,6 +346,6 @@ jobs:
           VPS_USER: ${{ secrets.RADIOKIT_VPS_USER }}
           VPS_HOST: ${{ secrets.RADIOKIT_VPS_HOST }}
         run: |
-          # Notifica admin: invalida cache, log nuova release
-          ssh -i ~/.ssh/id_ed25519 "$VPS_USER@$VPS_HOST" \
+          SSH_OPTS="-i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR"
+          ssh $SSH_OPTS "$VPS_USER@$VPS_HOST" \
             "curl -s 'http://127.0.0.1/api/admin/release-published.php?product=regia&version=${{ steps.meta.outputs.version }}&channel=${{ steps.meta.outputs.channel }}' || true"
