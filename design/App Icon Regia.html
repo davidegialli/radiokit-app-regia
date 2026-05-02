@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>App Icon — Regia RadioKit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Geist+Mono:wght@500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: oklch(0.14 0.005 260);
+    --surface: oklch(0.20 0.006 260);
+    --hairline: oklch(0.32 0.008 260);
+    --text: oklch(0.96 0.005 260);
+    --text-2: oklch(0.78 0.008 260);
+    --text-3: oklch(0.58 0.008 260);
+    --rk-blue: #009FE3;
+    --rk-lime: #95C11F;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background:
+    radial-gradient(ellipse at top, oklch(0.16 0.005 260) 0%, oklch(0.08 0.003 260) 100%);
+    color: var(--text);
+    font-family: 'Geist', system-ui, sans-serif;
+    min-height: 100%;
+  }
+  .mono { font-family: 'Geist Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+  .page { max-width: 1100px; margin: 0 auto; padding: 40px 32px 80px; }
+  .head { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; margin-bottom: 36px; }
+  .eyebrow { font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-3); margin-bottom: 6px; }
+  h1 { font-size: 36px; font-weight: 700; letter-spacing: -0.02em; margin: 0; }
+  .lede { color: var(--text-2); font-size: 14px; max-width: 480px; margin-top: 8px; line-height: 1.45; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 20px;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: 14px;
+    padding: 22px;
+  }
+  .card .cap {
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--text-3); margin-bottom: 14px;
+    display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .card .cap b { color: var(--text-2); font-weight: 600; }
+
+  .span-6 { grid-column: span 6; }
+  .span-4 { grid-column: span 4; }
+  .span-3 { grid-column: span 3; }
+  .span-12 { grid-column: span 12; }
+
+  .icon-stage {
+    height: 320px;
+    display: flex; align-items: center; justify-content: center;
+    background:
+      linear-gradient(45deg, transparent 49%, oklch(0.18 0.005 260) 49% 51%, transparent 51%) 0 0/24px 24px,
+      oklch(0.13 0.004 260);
+    border-radius: 10px;
+  }
+  .icon-stage.dark {
+    background:
+      radial-gradient(ellipse at center, oklch(0.20 0.006 260) 0%, oklch(0.10 0.003 260) 100%);
+  }
+  .icon-stage.light {
+    background:
+      radial-gradient(ellipse at center, oklch(0.96 0.005 260) 0%, oklch(0.85 0.005 260) 100%);
+  }
+
+  .row { display: flex; gap: 28px; align-items: center; flex-wrap: wrap; }
+
+  /* "Lockscreen" + homescreen mock */
+  .home-mock {
+    width: 240px; height: 360px;
+    background: linear-gradient(160deg, oklch(0.30 0.06 240) 0%, oklch(0.18 0.02 260) 100%);
+    border-radius: 28px;
+    padding: 22px 18px;
+    display: flex; flex-direction: column;
+    border: 6px solid #15161a;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+  }
+  .home-time { color: #fff; font-weight: 600; font-size: 32px; letter-spacing: -0.02em; }
+  .home-date { color: rgba(255,255,255,0.75); font-size: 11px; margin-top: 2px; }
+  .home-grid {
+    margin-top: auto; display: grid;
+    grid-template-columns: repeat(4, 1fr); gap: 14px;
+  }
+  .home-app {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    color: rgba(255,255,255,0.85); font-size: 9px; font-weight: 500;
+  }
+  .home-app .ic {
+    width: 42px; height: 42px; border-radius: 10px;
+    background: rgba(255,255,255,0.15);
+  }
+  .home-dock {
+    margin-top: 12px;
+    display: flex; gap: 12px;
+    background: rgba(255,255,255,0.1); padding: 10px;
+    border-radius: 24px; backdrop-filter: blur(10px);
+    justify-content: center;
+  }
+
+  /* Specimen labels */
+  .specimen { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .specimen .label {
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-3);
+    text-align: center;
+  }
+
+  /* Splash */
+  .splash {
+    width: 240px; height: 360px; border-radius: 24px;
+    border: 6px solid #15161a;
+    background: oklch(0.10 0.003 260);
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 18px;
+    position: relative; overflow: hidden;
+  }
+  .splash .brand-mono {
+    position: absolute; bottom: 28px; left: 0; right: 0;
+    text-align: center;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 10px; letter-spacing: 0.18em;
+    color: rgba(255,255,255,0.55);
+  }
+
+  /* Notification mock */
+  .notif {
+    width: 260px; padding: 12px;
+    background: oklch(0.18 0.005 260);
+    border: 1px solid var(--hairline);
+    border-radius: 14px;
+    display: flex; gap: 10px; align-items: flex-start;
+  }
+
+  /* Color swatches */
+  .swatches { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .sw { padding: 14px; border-radius: 10px; display: flex; flex-direction: column; gap: 4px; }
+  .sw .hex { font-family: 'Geist Mono', ui-monospace, monospace; font-size: 12px; font-weight: 600; }
+  .sw .name { font-size: 10px; opacity: 0.7; letter-spacing: 0.05em; }
+
+  /* Pill */
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 8px; border-radius: 4px;
+    background: oklch(0.66 0.22 25 / 0.14);
+    color: oklch(0.66 0.22 25);
+    border: 1px solid oklch(0.66 0.22 25 / 0.5);
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 10px; font-weight: 600; letter-spacing: 0.12em;
+  }
+  .pill .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor;
+    animation: dot 1.4s ease-in-out infinite; }
+  @keyframes dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.85)} }
+</style>
+</head>
+<body>
+<div class="page" data-screen-label="App Icon">
+
+  <div class="head">
+    <div>
+      <div class="eyebrow">Stereo 98 · App Regia · v0.1.4</div>
+      <h1>Icona dell'app, in famiglia.</h1>
+      <div class="lede">Costruita sopra il segno di RadioKit (uccello in volo, gradient blu→lime). L'icona broadcast vive in due varianti: <b>Regia</b> (per console, mark scuro con accento ON AIR) e <b>RadioKit</b> (mark originale, full color).</div>
+    </div>
+    <span class="pill"><span class="dot"></span>ON AIR · APP CONSOLE</span>
+  </div>
+
+  <div class="grid">
+
+    <!-- ───────── Hero icon — ADAPTIVE 432x432 (Android) ───────── -->
+    <div class="card span-6">
+      <div class="cap"><b>Adaptive icon · 432 × 432</b><span>icon-regia.svg</span></div>
+      <div class="icon-stage dark">
+        <!-- Reusable defs at top of svg — referenced by every icon below -->
+        <svg width="240" height="240" viewBox="0 0 432 432" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="rk-grad" x1="0" y1="0.5" x2="1" y2="0.5">
+              <stop offset="0%" stop-color="#009FE3"/>
+              <stop offset="100%" stop-color="#95C11F"/>
+            </linearGradient>
+            <radialGradient id="bg-grad" cx="0.5" cy="0.4" r="0.7">
+              <stop offset="0%" stop-color="#1f2128"/>
+              <stop offset="100%" stop-color="#0a0b0e"/>
+            </radialGradient>
+            <linearGradient id="rim-grad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="rgba(255,255,255,0.18)"/>
+              <stop offset="40%" stop-color="rgba(255,255,255,0.04)"/>
+              <stop offset="100%" stop-color="rgba(0,0,0,0.4)"/>
+            </linearGradient>
+          </defs>
+          <!-- Squircle background -->
+          <rect width="432" height="432" rx="98" ry="98" fill="url(#bg-grad)"/>
+          <rect width="432" height="432" rx="98" ry="98" fill="url(#rim-grad)" style="mix-blend-mode:overlay"/>
+          <!-- Concentric stream rings (broadcast vibe) -->
+          <g stroke="url(#rk-grad)" fill="none" opacity="0.18">
+            <circle cx="216" cy="216" r="158" stroke-width="1"/>
+            <circle cx="216" cy="216" r="128" stroke-width="1"/>
+            <circle cx="216" cy="216" r="98"  stroke-width="1"/>
+          </g>
+          <!-- ON AIR dot -->
+          <circle cx="346" cy="86" r="14" fill="#e6614f"/>
+          <circle cx="346" cy="86" r="20" fill="none" stroke="#e6614f" stroke-width="1.5" opacity="0.55"/>
+          <!-- RadioKit bird, gradient — viewBox of original is 512, scaled and centered into 432 -->
+          <g transform="translate(48, 48) scale(0.66)">
+            <path fill="url(#rk-grad)" d="M222.04,406.26c4.58-43.22,26.8-75.46,54.29-103.92c20.62-21.36,43.52-40.7,66.61-59.46
+              c22.22-18.05,23.16-28.16-3.45-38.53c-33.44-13.03-68.03-24.31-103.1-31.68c-67.05-14.1-133.21-29.76-195.39-65.43
+              c5.76,27.39,20.51,46.35,41.92,58.87c20.39,11.93,42.66,20.64,66.8,32.04c-20.26,3.39-39.29,6.57-57.72,9.65
+              c7.64,18.61,38.35,35.06,101.61,52.51c-12.64,10.73-29.08,13.85-60.85,10.88c19.7,23.06,44.25,34.49,70.37,43.46
+              c-39.6-5.15-71.47-22.94-94.89-58.56c8.43,1.03,15.15,1.85,21.87,2.67c-33.99-17.01-59.08-42.3-75.27-78.31
+              c11.08,2.73,21.16,5.22,31.25,7.71c-31.1-24.28-55.26-51.8-53.96-92.78c26.03,12.79,51.38,26.72,77.87,37.95
+              c42.62,18.07,88.5,23.22,133.66,31.39c32.29,5.84,64.03,14.89,95.84,23.2c7.03,1.83,13.72,5.94,19.84,10.07
+              c19.72,13.33,21.85,31.94,4.6,48.26c-14.22,13.46-31.08,24.22-44.67,38.22c-21.74,22.39-41.75,46.48-60.96,72
+              c64.96-30.79,131.28-49.33,203.31-39.28c0.92-1.27,1.84-2.55,2.77-3.82c-3.62-2.22-6.99-5.64-10.89-6.44
+              c-12.36-2.54-15.67-11.85-20.54-21.82c-7.68-15.73-23.63-17.87-39.47-18.03c-4.97-0.05-9.95,0.44-16.57,0.76
+              c29.28-11.5,54.04-3.07,67.66,21.47c1.48,2.66,4.64,4.93,7.54,6.16c16.72,7.1,24.4,16.53,27.84,36.1
+              C383.39,318.07,300.07,350.61,222.04,406.26z"/>
+          </g>
+          <!-- Wordmark "98" small -->
+          <text x="216" y="408" text-anchor="middle"
+                font-family="Geist Mono, monospace" font-size="22" font-weight="700"
+                letter-spacing="3" fill="rgba(255,255,255,0.85)">REGIA · 98</text>
+        </svg>
+      </div>
+    </div>
+
+    <!-- ───────── Light squircle variant ───────── -->
+    <div class="card span-3">
+      <div class="cap"><b>Light variant</b><span>regia-light.svg</span></div>
+      <div class="icon-stage light">
+        <svg width="180" height="180" viewBox="0 0 432 432" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="rk-grad-2" x1="0" y1="0.5" x2="1" y2="0.5">
+              <stop offset="0%" stop-color="#009FE3"/>
+              <stop offset="100%" stop-color="#95C11F"/>
+            </linearGradient>
+          </defs>
+          <rect width="432" height="432" rx="98" ry="98" fill="#fafaf7" stroke="#e8e8e3" stroke-width="2"/>
+          <g stroke="url(#rk-grad-2)" fill="none" opacity="0.18">
+            <circle cx="216" cy="216" r="158" stroke-width="1"/>
+            <circle cx="216" cy="216" r="128" stroke-width="1"/>
+          </g>
+          <circle cx="346" cy="86" r="14" fill="#e6614f"/>
+          <g transform="translate(48, 48) scale(0.66)">
+            <path fill="url(#rk-grad-2)" d="M222.04,406.26c4.58-43.22,26.8-75.46,54.29-103.92c20.62-21.36,43.52-40.7,66.61-59.46
+              c22.22-18.05,23.16-28.16-3.45-38.53c-33.44-13.03-68.03-24.31-103.1-31.68c-67.05-14.1-133.21-29.76-195.39-65.43
+              c5.76,27.39,20.51,46.35,41.92,58.87c20.39,11.93,42.66,20.64,66.8,32.04c-20.26,3.39-39.29,6.57-57.72,9.65
+              c7.64,18.61,38.35,35.06,101.61,52.51c-12.64,10.73-29.08,13.85-60.85,10.88c19.7,23.06,44.25,34.49,70.37,43.46
+              c-39.6-5.15-71.47-22.94-94.89-58.56c8.43,1.03,15.15,1.85,21.87,2.67c-33.99-17.01-59.08-42.3-75.27-78.31
+              c11.08,2.73,21.16,5.22,31.25,7.71c-31.1-24.28-55.26-51.8-53.96-92.78c26.03,12.79,51.38,26.72,77.87,37.95
+              c42.62,18.07,88.5,23.22,133.66,31.39c32.29,5.84,64.03,14.89,95.84,23.2c7.03,1.83,13.72,5.94,19.84,10.07
+              c19.72,13.33,21.85,31.94,4.6,48.26c-14.22,13.46-31.08,24.22-44.67,38.22c-21.74,22.39-41.75,46.48-60.96,72
+              c64.96-30.79,131.28-49.33,203.31-39.28c0.92-1.27,1.84-2.55,2.77-3.82c-3.62-2.22-6.99-5.64-10.89-6.44
+              c-12.36-2.54-15.67-11.85-20.54-21.82c-7.68-15.73-23.63-17.87-39.47-18.03c-4.97-0.05-9.95,0.44-16.57,0.76
+              c29.28-11.5,54.04-3.07,67.66,21.47c1.48,2.66,4.64,4.93,7.54,6.16c16.72,7.1,24.4,16.53,27.84,36.1
+              C383.39,318.07,300.07,350.61,222.04,406.26z"/>
+          </g>
+          <text x="216" y="408" text-anchor="middle" font-family="Geist Mono, monospace"
+                font-size="22" font-weight="700" letter-spacing="3" fill="#1a1a1a">REGIA · 98</text>
+        </svg>
+      </div>
+    </div>
+
+    <!-- ───────── Mono / monochrome ───────── -->
+    <div class="card span-3">
+      <div class="cap"><b>Monochrome</b><span>regia-mono.svg</span></div>
+      <div class="icon-stage" style="background: #0a0b0e;">
+        <svg width="180" height="180" viewBox="0 0 432 432" xmlns="http://www.w3.org/2000/svg">
+          <rect width="432" height="432" rx="98" ry="98" fill="#0a0b0e" stroke="#2a2a2a" stroke-width="2"/>
+          <g stroke="#fff" fill="none" opacity="0.12">
+            <circle cx="216" cy="216" r="158" stroke-width="1"/>
+            <circle cx="216" cy="216" r="128" stroke-width="1"/>
+          </g>
+          <circle cx="346" cy="86" r="14" fill="#fff"/>
+          <g transform="translate(48, 48) scale(0.66)">
+            <path fill="#fff" d="M222.04,406.26c4.58-43.22,26.8-75.46,54.29-103.92c20.62-21.36,43.52-40.7,66.61-59.46
+              c22.22-18.05,23.16-28.16-3.45-38.53c-33.44-13.03-68.03-24.31-103.1-31.68c-67.05-14.1-133.21-29.76-195.39-65.43
+              c5.76,27.39,20.51,46.35,41.92,58.87c20.39,11.93,42.66,20.64,66.8,32.04c-20.26,3.39-39.29,6.57-57.72,9.65
+              c7.64,18.61,38.35,35.06,101.61,52.51c-12.64,10.73-29.08,13.85-60.85,10.88c19.7,23.06,44.25,34.49,70.37,43.46
+              c-39.6-5.15-71.47-22.94-94.89-58.56c8.43,1.03,15.15,1.85,21.87,2.67c-33.99-17.01-59.08-42.3-75.27-78.31
+              c11.08,2.73,21.16,5.22,31.25,7.71c-31.1-24.28-55.26-51.8-53.96-92.78c26.03,12.79,51.38,26.72,77.87,37.95
+              c42.62,18.07,88.5,23.22,133.66,31.39c32.29,5.84,64.03,14.89,95.84,23.2c7.03,1.83,13.72,5.94,19.84,10.07
+              c19.72,13.33,21.85,31.94,4.6,48.26c-14.22,13.46-31.08,24.22-44.67,38.22c-21.74,22.39-41.75,46.48-60.96,72
+              c64.96-30.79,131.28-49.33,203.31-39.28c0.92-1.27,1.84-2.55,2.77-3.82c-3.62-2.22-6.99-5.64-10.89-6.44
+              c-12.36-2.54-15.67-11.85-20.54-21.82c-7.68-15.73-23.63-17.87-39.47-18.03c-4.97-0.05-9.95,0.44-16.57,0.76
+              c29.28-11.5,54.04-3.07,67.66,21.47c1.48,2.66,4.64,4.93,7.54,6.16c16.72,7.1,24.4,16.53,27.84,36.1
+              C383.39,318.07,300.07,350.61,222.04,406.26z"/>
+          </g>
+          <text x="216" y="408" text-anchor="middle" font-family="Geist Mono, monospace"
+                font-size="22" font-weight="700" letter-spacing="3" fill="#fff" opacity="0.85">REGIA · 98</text>
+        </svg>
+      </div>
+    </div>
+
+    <!-- ───────── Specimen sizes ───────── -->
+    <div class="card span-12">
+      <div class="cap"><b>Scale specimen</b><span>192 · 96 · 64 · 48 · 32 · 24 px</span></div>
+      <div class="row" style="justify-content: space-around; padding: 18px 0">
+        <!-- 192 -->
+        <div class="specimen">
+          <svg width="192" height="192" viewBox="0 0 432 432" xmlns="http://www.w3.org/2000/svg">
+            <use href="#regia-icon-192"/>
+            <defs>
+              <linearGradient id="g192" x1="0" y1="0.5" x2="1" y2="0.5">
+                <stop offset="0%" stop-color="#009FE3"/><stop offset="100%" stop-color="#95C11F"/>
+              </linearGradient>
+              <radialGradient id="b192" cx="0.5" cy="0.4" r="0.7">
+                <stop offset="0%" stop-color="#1f2128"/><stop offset="100%" stop-color="#0a0b0e"/>
+              </radialGradient>
+              <symbol id="regia-icon-192" viewBox="0 0 432 432">
+                <rect width="432" height="432" rx="98" ry="98" fill="url(#b192)"/>
+                <circle cx="346" cy="86" r="14" fill="#e6614f"/>
+                <g transform="translate(48, 48) scale(0.66)">
+                  <path fill="url(#g192)" d="M222.04,406.26c4.58-43.22,26.8-75.46,54.29-103.92c20.62-21.36,43.52-40.7,66.61-59.46c22.22-18.05,23.16-28.16-3.45-38.53c-33.44-13.03-68.03-24.31-103.1-31.68c-67.05-14.1-133.21-29.76-195.39-65.43c5.76,27.39,20.51,46.35,41.92,58.87c20.39,11.93,42.66,20.64,66.8,32.04c-20.26,3.39-39.29,6.57-57.72,9.65c7.64,18.61,38.35,35.06,101.61,52.51c-12.64,10.73-29.08,13.85-60.85,10.88c19.7,23.06,44.25,34.49,70.37,43.46c-39.6-5.15-71.47-22.94-94.89-58.56c8.43,1.03,15.15,1.85,21.87,2.67c-33.99-17.01-59.08-42.3-75.27-78.31c11.08,2.73,21.16,5.22,31.25,7.71c-31.1-24.28-55.26-51.8-53.96-92.78c26.03,12.79,51.38,26.72,77.87,37.95c42.62,18.07,88.5,23.22,133.66,31.39c32.29,5.84,64.03,14.89,95.84,23.2c7.03,1.83,13.72,5.94,19.84,10.07c19.72,13.33,21.85,31.94,4.6,48.26c-14.22,13.46-31.08,24.22-44.67,38.22c-21.74,22.39-41.75,46.48-60.96,72c64.96-30.79,131.28-49.33,203.31-39.28c0.92-1.27,1.84-2.55,2.77-3.82c-3.62-2.22-6.99-5.64-10.89-6.44c-12.36-2.54-15.67-11.85-20.54-21.82c-7.68-15.73-23.63-17.87-39.47-18.03c-4.97-0.05-9.95,0.44-16.57,0.76c29.28-11.5,54.04-3.07,67.66,21.47c1.48,2.66,4.64,4.93,7.54,6.16c16.72,7.1,24.4,16.53,27.84,36.1C383.39,318.07,300.07,350.61,222.04,406.26z"/>
+                </g>
+              </symbol>
+            </defs>
+          </svg>
+          <span class="label">192</span>
+        </div>
+        <div class="specimen"><svg width="96" height="96" viewBox="0 0 432 432"><use href="#regia-icon-192"/></svg><span class="label">96</span></div>
+        <div class="specimen"><svg width="64" height="64" viewBox="0 0 432 432"><use href="#regia-icon-192"/></svg><span class="label">64</span></div>
+        <div class="specimen"><svg width="48" height="48" viewBox="0 0 432 432"><use href="#regia-icon-192"/></svg><span class="label">48</span></div>
+        <div class="specimen"><svg width="32" height="32" viewBox="0 0 432 432"><use href="#regia-icon-192"/></svg><span class="label">32</span></div>
+        <div class="specimen"><svg width="24" height="24" viewBox="0 0 432 432"><use href="#regia-icon-192"/></svg><span class="label">24</span></div>
+      </div>
+    </div>
+
+    <!-- ───────── Homescreen mock ───────── -->
+    <div class="card span-4">
+      <div class="cap"><b>Homescreen Android</b><span>in contesto</span></div>
+      <div class="icon-stage" style="background: linear-gradient(180deg, oklch(0.30 0.06 240) 0%, oklch(0.18 0.02 260) 100%);">
+        <div class="home-mock">
+          <div class="home-time">22:47</div>
+          <div class="home-date">giov 1 mag · ON AIR · Pomeriggio 98</div>
+          <div class="home-grid">
+            <div class="home-app"><div class="ic" style="background:#1da1f2"></div>X</div>
+            <div class="home-app"><div class="ic" style="background:#25d366"></div>WApp</div>
+            <div class="home-app"><div class="ic" style="background:#ff5500"></div>SC</div>
+            <div class="home-app"><div class="ic" style="background:#e6614f"></div>Fotoc</div>
+          </div>
+          <div class="home-grid" style="margin-top:14px">
+            <div class="home-app">
+              <svg width="42" height="42" viewBox="0 0 432 432"><use href="#regia-icon-192"/></svg>
+              Regia 98
+            </div>
+            <div class="home-app"><div class="ic" style="background:#0a84ff"></div>Drive</div>
+            <div class="home-app"><div class="ic" style="background:#1db954"></div>Music</div>
+            <div class="home-app"><div class="ic" style="background:#ff3b30"></div>Map</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ───────── Splash screen ───────── -->
+    <div class="card span-4">
+      <div class="cap"><b>Splash · launch</b><span>regia-splash.png</span></div>
+      <div class="icon-stage dark">
+        <div class="splash">
+          <svg width="120" height="120" viewBox="0 0 432 432">
+            <use href="#regia-icon-192"/>
+          </svg>
+          <div style="font-size: 18px; font-weight: 600; letter-spacing: -0.01em">Regia · 98</div>
+          <div class="brand-mono">POWERED BY RADIOKIT · v0.1.4</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ───────── Notification icon ───────── -->
+    <div class="card span-4">
+      <div class="cap"><b>Notification icon</b><span>monocromo, sistema Android</span></div>
+      <div class="icon-stage dark" style="flex-direction: column; gap: 14px;">
+        <div class="notif">
+          <svg width="36" height="36" viewBox="0 0 432 432">
+            <rect width="432" height="432" rx="98" ry="98" fill="url(#g192)"/>
+            <g transform="translate(48,48) scale(0.66)">
+              <path fill="#fff" d="M222.04,406.26c4.58-43.22,26.8-75.46,54.29-103.92c20.62-21.36,43.52-40.7,66.61-59.46c22.22-18.05,23.16-28.16-3.45-38.53c-33.44-13.03-68.03-24.31-103.1-31.68c-67.05-14.1-133.21-29.76-195.39-65.43c5.76,27.39,20.51,46.35,41.92,58.87c20.39,11.93,42.66,20.64,66.8,32.04c-20.26,3.39-39.29,6.57-57.72,9.65c7.64,18.61,38.35,35.06,101.61,52.51c-12.64,10.73-29.08,13.85-60.85,10.88c19.7,23.06,44.25,34.49,70.37,43.46c-39.6-5.15-71.47-22.94-94.89-58.56c8.43,1.03,15.15,1.85,21.87,2.67c-33.99-17.01-59.08-42.3-75.27-78.31c11.08,2.73,21.16,5.22,31.25,7.71c-31.1-24.28-55.26-51.8-53.96-92.78c26.03,12.79,51.38,26.72,77.87,37.95c42.62,18.07,88.5,23.22,133.66,31.39c32.29,5.84,64.03,14.89,95.84,23.2c7.03,1.83,13.72,5.94,19.84,10.07c19.72,13.33,21.85,31.94,4.6,48.26c-14.22,13.46-31.08,24.22-44.67,38.22c-21.74,22.39-41.75,46.48-60.96,72c64.96-30.79,131.28-49.33,203.31-39.28c0.92-1.27,1.84-2.55,2.77-3.82c-3.62-2.22-6.99-5.64-10.89-6.44c-12.36-2.54-15.67-11.85-20.54-21.82c-7.68-15.73-23.63-17.87-39.47-18.03c-4.97-0.05-9.95,0.44-16.57,0.76c29.28-11.5,54.04-3.07,67.66,21.47c1.48,2.66,4.64,4.93,7.54,6.16c16.72,7.1,24.4,16.53,27.84,36.1C383.39,318.07,300.07,350.61,222.04,406.26z"/>
+            </g>
+          </svg>
+          <div style="flex:1">
+            <div style="font-family:'Geist Mono', monospace; font-size: 9px; color: var(--text-3); letter-spacing: 0.1em">REGIA · 98 · ora</div>
+            <div style="font-size: 12px; font-weight: 600; margin-top: 2px">Marlena Vox in diretta</div>
+            <div style="font-size: 11px; color: var(--text-2); margin-top: 1px">Ospite alle 23:00</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ───────── Color palette ───────── -->
+    <div class="card span-6">
+      <div class="cap"><b>Brand colors</b><span>RadioKit + Regia</span></div>
+      <div class="swatches">
+        <div class="sw" style="background:#009FE3; color:#fff">
+          <div class="hex">#009FE3</div>
+          <div class="name">RADIOKIT BLUE</div>
+        </div>
+        <div class="sw" style="background:#95C11F; color:#0a0a0a">
+          <div class="hex">#95C11F</div>
+          <div class="name">RADIOKIT LIME</div>
+        </div>
+        <div class="sw" style="background:#e6614f; color:#fff">
+          <div class="hex">#E6614F</div>
+          <div class="name">ON AIR</div>
+        </div>
+        <div class="sw" style="background:#0a0b0e; color:#fff; border:1px solid #2a2a2a">
+          <div class="hex">#0A0B0E</div>
+          <div class="name">CONSOLE BG</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ───────── Specs / handoff ───────── -->
+    <div class="card span-6">
+      <div class="cap"><b>Specs</b><span>handoff</span></div>
+      <div class="mono" style="font-size: 12px; color: var(--text-2); line-height: 1.7;">
+        <div><span style="color:var(--text-3)">format</span>  ─ adaptive (foreground + background separati)</div>
+        <div><span style="color:var(--text-3)">canvas</span>  ─ 432 × 432 dp · safe zone Ø 264 dp</div>
+        <div><span style="color:var(--text-3)">corner</span>  ─ squircle r 98 (Material 3 expressive)</div>
+        <div><span style="color:var(--text-3)">grad</span>    ─ #009FE3 → #95C11F orizzontale</div>
+        <div><span style="color:var(--text-3)">accent</span>  ─ ON AIR dot #E6614F top-right</div>
+        <div><span style="color:var(--text-3)">font</span>    ─ Geist Mono 700 / spacing 0.15em</div>
+        <div><span style="color:var(--text-3)">export</span>  ─ ic_launcher{_round}.png 48,72,96,144,192</div>
+        <div><span style="color:var(--text-3)">flutter</span> ─ flutter_launcher_icons.yaml ready</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>

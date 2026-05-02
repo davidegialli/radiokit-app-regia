@@ -1,0 +1,64 @@
+name: radiokit_regia
+description: RadioKit Regia — controllo regia mobile per radio web/digitale
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: '>=3.4.0 <4.0.0'
+  flutter: '>=3.22.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # State management + DI + routing
+  get: ^4.6.6
+
+  # Storage locale (preferenze, lingua, chiave attivazione)
+  get_storage: ^2.1.1
+
+  # Networking
+  dio: ^5.4.0
+  web_socket_channel: ^2.4.0
+
+  # Push notifications
+  onesignal_flutter: ^5.1.0
+
+  # Utility
+  intl: ^0.19.0
+  uuid: ^4.2.1
+
+  cupertino_icons: ^1.0.6
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+  # NOTA: assets/fonts vanno aggiunti dopo il primo build.
+  # Scaricare Geist da https://vercel.com/font e copiare in assets/fonts/
+  # poi de-commentare il blocco sotto.
+  #
+  # assets:
+  #   - assets/icons/
+  # fonts:
+  #   - family: Geist
+  #     fonts:
+  #       - asset: assets/fonts/Geist-Regular.ttf
+  #       - asset: assets/fonts/Geist-Medium.ttf
+  #         weight: 500
+  #       - asset: assets/fonts/Geist-SemiBold.ttf
+  #         weight: 600
+  #       - asset: assets/fonts/Geist-Bold.ttf
+  #         weight: 700
+  #   - family: GeistMono
+  #     fonts:
+  #       - asset: assets/fonts/GeistMono-Regular.ttf
+  #       - asset: assets/fonts/GeistMono-Medium.ttf
+  #         weight: 500
+  #       - asset: assets/fonts/GeistMono-SemiBold.ttf
+  #         weight: 600

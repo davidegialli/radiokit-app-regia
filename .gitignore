@@ -1,0 +1,62 @@
+# Flutter / Dart
+flutter/.dart_tool/
+flutter/.flutter-plugins
+flutter/.flutter-plugins-dependencies
+flutter/.packages
+flutter/.pub-cache/
+flutter/.pub/
+flutter/build/
+flutter/.metadata
+flutter/pubspec.lock
+
+# Android
+flutter/android/.gradle/
+flutter/android/captures/
+flutter/android/gradlew
+flutter/android/gradlew.bat
+flutter/android/local.properties
+flutter/android/key.properties
+flutter/android/**/release.keystore
+flutter/android/**/*.jks
+flutter/android/app/release/
+flutter/android/app/debug/
+flutter/android/app/profile/
+
+# iOS / macOS
+flutter/ios/Flutter/Flutter.framework
+flutter/ios/Flutter/Flutter.podspec
+flutter/ios/Flutter/Generated.xcconfig
+flutter/ios/Flutter/app.flx
+flutter/ios/Flutter/app.zip
+flutter/ios/Flutter/flutter_assets/
+flutter/ios/Flutter/flutter_export_environment.sh
+flutter/ios/ServiceDefinitions.json
+flutter/ios/Runner/GeneratedPluginRegistrant.*
+flutter/ios/Pods/
+flutter/ios/Podfile.lock
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets
+*.p8
+*.p12
+*.mobileprovision
+*.cer
+
+# Build artifacts
+dist/
+*.apk
+*.aab
+*.ipa
+
+# Font assets (devi scaricarli a mano da vercel.com/font)
+flutter/assets/fonts/*.ttf
