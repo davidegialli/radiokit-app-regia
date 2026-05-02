@@ -32,11 +32,14 @@ class ActivationPage extends GetView<ActivationController> {
               const SizedBox(height: 32),
               Obx(() => TextField(
                 onChanged: (v) => controller.keyText.value = v,
+                keyboardType: TextInputType.visiblePassword,  // mostra lettere+simboli insieme, no autocorrect
+                autocorrect: false,
+                enableSuggestions: false,
                 inputFormatters: [
                   UpperCaseTextFormatter(),
                   FilteringTextInputFormatter.allow(RegExp(r'[A-Z0-9\-]')),
                   LengthLimitingTextInputFormatter(24),  // RK-XXXX-XXXX-XXXX-XXXX = 22 (max prodotti)
-                  KeyAutoDashFormatter(),                // auto-insert "-" ogni 4 char dopo prefisso
+                  KeyAutoDashFormatter(),                // auto-insert "-" su paste
                 ],
                 style: const TextStyle(fontFamily: 'GeistMono', fontSize: 16, letterSpacing: 1.5),
                 textAlign: TextAlign.center,
