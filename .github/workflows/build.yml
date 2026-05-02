@@ -95,12 +95,11 @@ jobs:
           else
             echo "kotlin.jvm.target.validation.mode=warning" > android/gradle.properties
           fi
-          # Inject globale: forza Java + Kotlin target su tutti i subprojects
-          # (i plugin Flutter come path_provider, shared_preferences, ecc. usano il default 1.8).
-          if [ -f android/build.gradle ]; then
-            if ! grep -q "RADIOKIT_TOOLCHAIN_OVERRIDE" android/build.gradle; then
-              cat >> android/build.gradle <<'EOF'
-
+          # Inject globale: forza Java + Kotlin target su tutti i subprojects.
+          # PREPEND (top of file) così l'afterEvaluate viene registrato PRIMA
+          # che i subprojects vengano valutati.
+          if [ -f android/build.gradle ] && ! grep -q "RADIOKIT_TOOLCHAIN_OVERRIDE" android/build.gradle; then
+            cat > /tmp/toolchain_override.gradle <<'EOF'
           // RADIOKIT_TOOLCHAIN_OVERRIDE — forza JVM 17 su tutti i subprojects
           subprojects {
               afterEvaluate { project ->
@@ -119,8 +118,10 @@ jobs:
                   }
               }
           }
+
           EOF
-            fi
+            cat /tmp/toolchain_override.gradle android/build.gradle > /tmp/build.gradle.new
+            mv /tmp/build.gradle.new android/build.gradle
           fi
           echo "--- gradle.properties ---"
           cat android/gradle.properties || true
