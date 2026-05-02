@@ -52,10 +52,11 @@ jobs:
             test('placeholder', () { expect(1 + 1, 2); });
           }
           EOF
-          # Bump Kotlin Gradle plugin: il template Flutter 3.22 usa 1.7.10
-          # ma le moderne androidx (annotation-jvm 1.9.1+) richiedono 1.9+.
+          # Bump Kotlin Gradle plugin: il template Flutter 3.22 usa 1.7.10.
+          # Le deps androidx moderne usano kotlin-stdlib con metadata 2.2.0,
+          # quindi serve compilatore Kotlin 2.x. Usiamo 2.0.21 (stabile).
           if [ -f android/settings.gradle ]; then
-            sed -i -E 's#("org\.jetbrains\.kotlin\.android"\s+version\s+")[0-9.]+(")#\11.9.22\2#' android/settings.gradle
+            sed -i -E 's#("org\.jetbrains\.kotlin\.android"\s+version\s+")[0-9.]+(")#\12.0.21\2#' android/settings.gradle
             echo "--- patched android/settings.gradle ---"
             grep -E "kotlin\.android" android/settings.gradle || true
           fi
@@ -64,6 +65,30 @@ jobs:
             sed -i -E 's#compileSdkVersion\s+[0-9]+#compileSdkVersion 34#' android/app/build.gradle
             sed -i -E 's#targetSdkVersion\s+[0-9]+#targetSdkVersion 34#' android/app/build.gradle
             sed -i -E 's#minSdkVersion\s+[a-zA-Z0-9.]+#minSdkVersion 23#' android/app/build.gradle
+            # Forza tutte le kotlin-stdlib a 2.0.21 per evitare conflitti binari
+            if ! grep -q "resolutionStrategy.force.*kotlin-stdlib" android/app/build.gradle; then
+              cat >> android/app/build.gradle <<'EOF'
+
+          configurations.all {
+              resolutionStrategy {
+                  force 'org.jetbrains.kotlin:kotlin-stdlib:2.0.21'
+                  force 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.0.21'
+                  force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.0.21'
+              }
+          }
+          EOF
+            fi
+          fi
+          # Bump anche Android Gradle Plugin se necessario (Flutter 3.22 usa 7.3)
+          if [ -f android/settings.gradle ]; then
+            sed -i -E 's#("com\.android\.application"\s+version\s+")[0-9.]+(")#\18.1.4\2#' android/settings.gradle
+            echo "--- patched AGP version ---"
+            grep -E "com\.android\.application" android/settings.gradle || true
+          fi
+          # Aggiorna Gradle wrapper a versione compatibile con AGP 8.1
+          if [ -f android/gradle/wrapper/gradle-wrapper.properties ]; then
+            sed -i -E 's#gradle-[0-9.]+-all\.zip#gradle-8.4-all.zip#' android/gradle/wrapper/gradle-wrapper.properties
+            cat android/gradle/wrapper/gradle-wrapper.properties
           fi
 
       - run: flutter pub get
