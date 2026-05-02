@@ -94,6 +94,9 @@ jobs:
   ios:
     name: iOS build
     runs-on: macos-14
+    # ⏸ iOS in pausa — riabilitare quando avremo i certificati Apple pronti.
+    # Per riattivare: rimuovere la riga sotto.
+    if: false
     defaults:
       run:
         working-directory: ${{ env.WORKING_DIR }}
@@ -151,7 +154,8 @@ jobs:
   # ──────────────────────────────────────────────────────────────
   deploy:
     name: Deploy to radiokit.io
-    needs: [android, ios]
+    # iOS in pausa — il deploy parte appena Android è verde.
+    needs: [android]
     runs-on: ubuntu-latest
     if: |
       github.event_name == 'release' ||
@@ -166,12 +170,13 @@ jobs:
           name: android-build
           path: dist/android
 
-      - name: Download iOS artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: ios-build
-          path: dist/ios
-        continue-on-error: true
+      # iOS in pausa — riabilitare quando il job ios diventa attivo.
+      # - name: Download iOS artifacts
+      #   uses: actions/download-artifact@v4
+      #   with:
+      #     name: ios-build
+      #     path: dist/ios
+      #   continue-on-error: true
 
       - name: Compute version metadata
         id: meta
