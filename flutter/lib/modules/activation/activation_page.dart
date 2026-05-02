@@ -68,36 +68,44 @@ class UpperCaseTextFormatter extends TextInputFormatter {
   }
 }
 
-/// Auto-insert "-" every 4 chars after the product prefix.
-/// Supports RK- (Diretta, 5 groups), RKR- (Regia), RKT- (Timer), RKM- (Speaker).
-/// Esempio: digiti "RKRKRFEH3M" → diventa "RK-RKRF-EH3M"
+/// Auto-formatter "smart paste":
+/// - Se l'utente digita carattere per carattere, NON tocca nulla — l'utente
+///   mette i "-" come preferisce (oppure li copia da email).
+/// - Se l'utente INCOLLA una chiave intera senza trattini (es. da clipboard),
+///   il formatter la riconosce dal numero di caratteri grezzi e inserisce i "-"
+///   nei punti giusti:
+///     * 18 char raw  → RK-XXXX-XXXX-XXXX-XXXX (Diretta, 5 gruppi)
+///     * 15 char raw  → RKx-XXXX-XXXX-XXXX     (Regia/Timer/Speaker, 4 gruppi)
 class KeyAutoDashFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
     final raw = newValue.text.replaceAll('-', '');
 
-    // Determina lunghezza prefisso (RK | RKR | RKT | RKM)
-    String prefix;
-    if (raw.length >= 3 && (raw.startsWith('RKR') || raw.startsWith('RKT') || raw.startsWith('RKM'))) {
-      prefix = raw.substring(0, 3);
-    } else if (raw.length >= 2 && raw.startsWith('RK')) {
-      prefix = raw.substring(0, 2);
-    } else {
-      // Non c'è ancora un prefisso valido: lascia passare l'input senza dash
+    // Determina se è un paste (input cresciuto di più di 1 char in un colpo)
+    final oldRaw   = oldValue.text.replaceAll('-', '');
+    final isPaste  = (raw.length - oldRaw.length).abs() > 1;
+    if (!isPaste) {
+      // Typing manuale → lascia tutto com'è (l'utente mette il dash dove vuole)
       return newValue;
     }
 
-    final rest = raw.substring(prefix.length);
-    final buf = StringBuffer(prefix);
-    for (var i = 0; i < rest.length; i++) {
-      if (i % 4 == 0) buf.write('-');
-      buf.write(rest[i]);
+    // Paste: prova a riconoscere il formato e auto-formatta
+    String? formatted;
+    if (raw.length == 18 && raw.startsWith('RK')) {
+      // Diretta: RK + 16 char → RK-XXXX-XXXX-XXXX-XXXX
+      formatted = 'RK-${raw.substring(2, 6)}-${raw.substring(6, 10)}-${raw.substring(10, 14)}-${raw.substring(14, 18)}';
+    } else if (raw.length == 15 &&
+        (raw.startsWith('RKR') || raw.startsWith('RKT') || raw.startsWith('RKM'))) {
+      // Regia/Timer/Speaker: RKx + 12 char → RKx-XXXX-XXXX-XXXX
+      formatted = '${raw.substring(0, 3)}-${raw.substring(3, 7)}-${raw.substring(7, 11)}-${raw.substring(11, 15)}';
     }
-    final formatted = buf.toString();
 
-    return TextEditingValue(
-      text: formatted,
-      selection: TextSelection.collapsed(offset: formatted.length),
-    );
+    if (formatted != null) {
+      return TextEditingValue(
+        text: formatted,
+        selection: TextSelection.collapsed(offset: formatted.length),
+      );
+    }
+    return newValue;
   }
 }
