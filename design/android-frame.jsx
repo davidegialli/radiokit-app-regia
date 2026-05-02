@@ -1,5 +1,5 @@
 // Android device frame — dark broadcast variant
-// Custom version for Stereo 98 regia console.
+// Custom version for RadioKit Regia console.
 
 function AndroidStatusBarDark({ accent = 'oklch(0.66 0.22 25)', onAir = false }) {
   return (

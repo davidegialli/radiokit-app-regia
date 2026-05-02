@@ -29,7 +29,7 @@ class AppColors {
   static const Color warnSoft   = Color(0x29E3B85A);
   static const Color info       = Color(0xFF6BB1E0); // push blue
 
-  // Brand Stereo 98 (per quando si usa profilo radio Stereo 98)
-  static const Color brandPink  = Color(0xFFD61F7A);
-  static const Color brandCyan  = Color(0xFF5BC4F2);
+  // Brand RadioKit
+  static const Color rkPrimary   = Color(0xFFE6614F); // ON AIR red (alias di accent)
+  static const Color rkSecondary = Color(0xFF5FC594); // AutoDJ green
 }

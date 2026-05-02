@@ -12,9 +12,9 @@ class AppConstants {
   static const String keyPrefix = 'RKR-';
   static final RegExp keyRegex  = RegExp(r'^RKR-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$');
 
-  // OneSignal — riuso App ID Stereo 98 in fase iniziale,
-  // poi App ID dedicato RadioKit Regia se separiamo
-  static const String oneSignalAppId = '3e87897b-47fb-4389-9efe-9b99ecc6949d';
+  // OneSignal — App ID dedicato RadioKit Regia (da creare in dashboard).
+  // Placeholder finché non viene creata l'app dedicata.
+  static const String oneSignalAppId = '00000000-0000-0000-0000-000000000000';
 
   // GetStorage keys
   static const String storageKeyLicense  = 'rkr_license_key';
@@ -24,7 +24,7 @@ class AppConstants {
   static const String storageKeyRadioId  = 'rkr_radio_id';
   static const String storageKeyUserName = 'rkr_user_name';
 
-  // Lingue supportate (allineate al sito stereo98 + radiokit.io)
+  // Lingue supportate (allineate al sito radiokit.io)
   static const List<String> supportedLocales = ['it', 'en', 'fr', 'es'];
   static const String defaultLocale = 'it';
 }

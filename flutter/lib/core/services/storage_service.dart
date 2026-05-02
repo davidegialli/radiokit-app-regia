@@ -4,7 +4,7 @@ import 'package:get_storage/get_storage.dart';
 import '../constants/app_constants.dart';
 
 /// Wrapper su GetStorage per le preferenze persistenti.
-/// Stesse chiavi tra Stereo 98 / Diretta / Regia per coerenza.
+/// Stesse chiavi tra Diretta / Timer / Regia per coerenza.
 class StorageService extends GetxService {
   final _box = GetStorage();
 
