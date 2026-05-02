@@ -4,8 +4,9 @@ class AppConstants {
   static const String appName = 'RadioKit Regia';
   static const String appVersion = '0.1.0';
 
-  // VPS RadioKit endpoint (stesso flow Timer/Diretta/Speaker)
-  static const String apiBaseUrl = 'https://radiokit.io/api/regia';
+  // VPS RadioKit endpoint — single front-controller, action-dispatched
+  // (stesso pattern di /api/timer/)
+  static const String apiBaseUrl = 'https://radiokit.io/api/regia/';
   static const String wsBaseUrl  = 'wss://radiokit.io/api/regia/stream';
 
   // Sistema chiavi zero-config — prefisso prodotto Regia

@@ -30,39 +30,35 @@ class ApiService extends GetxService {
     ));
   }
 
-  /// Attivazione con chiave RKR-XXXX-XXXX-XXXX.
-  /// Risposta attesa: { token, radio_id, services: [...], user_name, bridges_online: [...] }
+  /// Front-controller pattern (allineato a /api/timer/): single endpoint,
+  /// action via query string. Tutti i metodi colpiscono `apiBaseUrl`.
+
   Future<Map<String, dynamic>> activate(String key) async {
-    final r = await _dio.post('/auth', data: {'key': key});
+    final r = await _dio.post('?action=auth', data: {'key': key});
     return Map<String, dynamic>.from(r.data as Map);
   }
 
-  /// Stato globale (now playing, listener, bridge attivi).
   Future<Map<String, dynamic>> status() async {
-    final r = await _dio.get('/status');
+    final r = await _dio.get('?action=status');
     return Map<String, dynamic>.from(r.data as Map);
   }
 
-  /// Lancia diretta da URL stream esterno.
-  /// Body: { url, title, host?, duration_min?, start_mode, auto_fallback }
   Future<Map<String, dynamic>> streamUrlStart(Map<String, dynamic> body) async {
-    final r = await _dio.post('/live/stream-url', data: body);
+    final r = await _dio.post('?action=stream_url_start', data: body);
     return Map<String, dynamic>.from(r.data as Map);
   }
 
   Future<Map<String, dynamic>> streamUrlStatus() async {
-    final r = await _dio.get('/live/stream-url/status');
+    final r = await _dio.get('?action=stream_url_status');
     return Map<String, dynamic>.from(r.data as Map);
   }
 
   Future<void> streamUrlStop() async {
-    await _dio.post('/live/stream-url/stop');
+    await _dio.post('?action=stream_url_stop');
   }
 
-  /// Probe URL sorgente prima di andare in onda.
-  /// Risposta: { reachable: bool, content_type, codec?, bitrate? }
   Future<Map<String, dynamic>> probeStreamUrl(String url) async {
-    final r = await _dio.post('/probe', data: {'url': url});
+    final r = await _dio.post('?action=probe', data: {'url': url});
     return Map<String, dynamic>.from(r.data as Map);
   }
 }
