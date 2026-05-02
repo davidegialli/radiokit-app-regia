@@ -140,6 +140,14 @@ jobs:
           fi
 
       - run: flutter pub get
+      - name: Generate launcher icons
+        run: |
+          if [ -f assets/icons/app_icon.png ]; then
+            flutter pub run flutter_launcher_icons || \
+              dart run flutter_launcher_icons || true
+          else
+            echo "No icon source — skipping"
+          fi
       - run: flutter analyze --no-fatal-infos
       - name: Run tests
         run: flutter test || echo "no tests yet"

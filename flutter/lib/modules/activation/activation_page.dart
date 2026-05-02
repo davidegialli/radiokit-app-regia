@@ -35,7 +35,8 @@ class ActivationPage extends GetView<ActivationController> {
                 inputFormatters: [
                   UpperCaseTextFormatter(),
                   FilteringTextInputFormatter.allow(RegExp(r'[A-Z0-9\-]')),
-                  LengthLimitingTextInputFormatter(19),
+                  LengthLimitingTextInputFormatter(24),  // RK-XXXX-XXXX-XXXX-XXXX = 22 (max prodotti)
+                  KeyAutoDashFormatter(),                // auto-insert "-" ogni 4 char dopo prefisso
                 ],
                 style: const TextStyle(fontFamily: 'GeistMono', fontSize: 16, letterSpacing: 1.5),
                 textAlign: TextAlign.center,
@@ -64,5 +65,39 @@ class UpperCaseTextFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
     return newValue.copyWith(text: newValue.text.toUpperCase());
+  }
+}
+
+/// Auto-insert "-" every 4 chars after the product prefix.
+/// Supports RK- (Diretta, 5 groups), RKR- (Regia), RKT- (Timer), RKM- (Speaker).
+/// Esempio: digiti "RKRKRFEH3M" → diventa "RK-RKRF-EH3M"
+class KeyAutoDashFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    final raw = newValue.text.replaceAll('-', '');
+
+    // Determina lunghezza prefisso (RK | RKR | RKT | RKM)
+    String prefix;
+    if (raw.length >= 3 && (raw.startsWith('RKR') || raw.startsWith('RKT') || raw.startsWith('RKM'))) {
+      prefix = raw.substring(0, 3);
+    } else if (raw.length >= 2 && raw.startsWith('RK')) {
+      prefix = raw.substring(0, 2);
+    } else {
+      // Non c'è ancora un prefisso valido: lascia passare l'input senza dash
+      return newValue;
+    }
+
+    final rest = raw.substring(prefix.length);
+    final buf = StringBuffer(prefix);
+    for (var i = 0; i < rest.length; i++) {
+      if (i % 4 == 0) buf.write('-');
+      buf.write(rest[i]);
+    }
+    final formatted = buf.toString();
+
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
   }
 }
