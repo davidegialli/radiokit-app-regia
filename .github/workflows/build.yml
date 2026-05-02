@@ -78,6 +78,10 @@ jobs:
           }
           EOF
             fi
+            # Allinea JVM target Java + Kotlin a 17 (AGP 8.x richiede Java 17)
+            sed -i -E 's#sourceCompatibility\s+JavaVersion\.VERSION_[0-9_]+#sourceCompatibility JavaVersion.VERSION_17#' android/app/build.gradle
+            sed -i -E 's#targetCompatibility\s+JavaVersion\.VERSION_[0-9_]+#targetCompatibility JavaVersion.VERSION_17#' android/app/build.gradle
+            sed -i -E "s#jvmTarget\s*=\s*['\"][0-9._]+['\"]#jvmTarget = '17'#" android/app/build.gradle
           fi
           # Bump anche Android Gradle Plugin se necessario (Flutter 3.22 usa 7.3)
           if [ -f android/settings.gradle ]; then
