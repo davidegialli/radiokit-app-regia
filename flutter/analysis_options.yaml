@@ -1,0 +1,22 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+  errors:
+    # Deprecazioni Flutter 3.27+ (background, withOpacity) — al momento warn,
+    # quando aggiorneremo migreremo a withValues / surface tinting.
+    deprecated_member_use: ignore
+
+linter:
+  rules:
+    # I file i18n usano il codice locale ufficiale (it_IT, en_US, ecc.) —
+    # è una convenzione standard, non rinominiamo a lower_snake_case.
+    file_names: false
+    # Doc comment in cima ai file di modello/utility è ok come "library doc".
+    dangling_library_doc_comments: false
+    # Useremo const dove sensato, non blocchiamo per questo.
+    prefer_const_constructors: false
+    prefer_const_literals_to_create_immutables: false
+    prefer_const_declarations: false
