@@ -88,18 +88,15 @@ class StreamUrlController extends GetxController {
     health.value = StreamHealth.probing;
 
     try {
-      // 1. Probe URL sorgente
+      // 1. Probe URL sorgente — SOLO informativo, non bloccante.
+      // Alcuni server bloccano HEAD requests ma servono lo stream regolarmente,
+      // quindi l'unreachable può essere falso positivo. Proseguiamo sempre.
       try {
         final probe = await ApiService.to.probeStreamUrl(url.value.trim());
-        if (probe['reachable'] == true) {
-          if (probe['codec']   != null) srcCodec.value   = probe['codec'].toString();
-          if (probe['bitrate'] != null) srcBitrate.value = '${probe['bitrate']} kbps';
-        } else {
-          health.value = StreamHealth.down;
-          return;
-        }
+        if (probe['codec']   != null) srcCodec.value   = probe['codec'].toString();
+        if (probe['bitrate'] != null) srcBitrate.value = '${probe['bitrate']} kbps';
       } catch (_) {
-        // In sviluppo il probe può fallire — proseguiamo lo stesso
+        // probe failed network — continua comunque
       }
 
       final radioId = StorageService.to.radioId ?? 'demo';
