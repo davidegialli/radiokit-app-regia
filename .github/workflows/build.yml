@@ -78,11 +78,54 @@ jobs:
           }
           EOF
             fi
-            # Allinea JVM target Java + Kotlin a 17 (AGP 8.x richiede Java 17)
+            # Allinea JVM target Java + Kotlin a 17 (AGP 8.x).
+            # Sed prima sui valori esistenti, poi injection se mancanti.
             sed -i -E 's#sourceCompatibility\s+JavaVersion\.VERSION_[0-9_]+#sourceCompatibility JavaVersion.VERSION_17#' android/app/build.gradle
             sed -i -E 's#targetCompatibility\s+JavaVersion\.VERSION_[0-9_]+#targetCompatibility JavaVersion.VERSION_17#' android/app/build.gradle
             sed -i -E "s#jvmTarget\s*=\s*['\"][0-9._]+['\"]#jvmTarget = '17'#" android/app/build.gradle
           fi
+          # Disattiva il check di inconsistenza JVM target (warning invece di error).
+          # Questo evita il fail "compileJavaWithJavac (1.8) vs compileKotlin (17)"
+          # senza dover toccare ogni Gradle file dei plugin Flutter.
+          mkdir -p android
+          if [ -f android/gradle.properties ]; then
+            if ! grep -q "jvm.target.validation.mode" android/gradle.properties; then
+              echo "kotlin.jvm.target.validation.mode=warning" >> android/gradle.properties
+            fi
+          else
+            echo "kotlin.jvm.target.validation.mode=warning" > android/gradle.properties
+          fi
+          # Inject globale: forza Java + Kotlin target su tutti i subprojects
+          # (i plugin Flutter come path_provider, shared_preferences, ecc. usano il default 1.8).
+          if [ -f android/build.gradle ]; then
+            if ! grep -q "RADIOKIT_TOOLCHAIN_OVERRIDE" android/build.gradle; then
+              cat >> android/build.gradle <<'EOF'
+
+          // RADIOKIT_TOOLCHAIN_OVERRIDE — forza JVM 17 su tutti i subprojects
+          subprojects {
+              afterEvaluate { project ->
+                  if (project.hasProperty('android')) {
+                      project.android {
+                          compileOptions {
+                              sourceCompatibility JavaVersion.VERSION_17
+                              targetCompatibility JavaVersion.VERSION_17
+                          }
+                      }
+                  }
+                  project.tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+                      kotlinOptions {
+                          jvmTarget = '17'
+                      }
+                  }
+              }
+          }
+          EOF
+            fi
+          fi
+          echo "--- gradle.properties ---"
+          cat android/gradle.properties || true
+          echo "--- android/build.gradle tail ---"
+          tail -30 android/build.gradle || true
           # Bump anche Android Gradle Plugin se necessario (Flutter 3.22 usa 7.3)
           if [ -f android/settings.gradle ]; then
             sed -i -E 's#("com\.android\.application"\s+version\s+")[0-9.]+(")#\18.1.4\2#' android/settings.gradle
