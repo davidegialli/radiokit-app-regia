@@ -67,6 +67,24 @@ const Map<String, String> itIT = {
   'onair.insertJingle': 'Inserisci jingle',
   'onair.queue': 'Coda',
   'onair.nowPlaying': 'In riproduzione',
+  'onair.transport':   'Comandi playback',
+  'onair.prev':        'Precedente',
+  'onair.play':        'Riproduci',
+  'onair.pause':       'Pausa',
+  'onair.skipNext':    'Successivo',
+  'onair.stop':        'Stop',
+  'onair.volume':      'Volume',
+  'onair.runEvent':    'Esegui evento',
+  'onair.eventName':   'Nome evento',
+  'onair.eventHint':   'Es: jingle_news, promo_estate — preconfigurati nello scheduler RadioBOSS',
+  'onair.runBtn':      '▶ Esegui',
+  'onair.toast.sent':  'Comando inviato',
+  'onair.toast.ack':   '✓ {action}',
+  'onair.toast.fail':  '✕ Comando non riuscito',
+  'onair.statePlaying':'IN RIPRODUZIONE',
+  'onair.statePaused': 'IN PAUSA',
+  'onair.stateStopped':'FERMO',
+  'onair.stateUnknown':'STATO SCONOSCIUTO',
 
   // Lingua (selettore in attivazione)
   'language.title': 'Lingua',
@@ -140,6 +158,21 @@ const Map<String, String> itIT = {
 
   // Listeners
   'listeners.title': 'Listener live',
+
+  // Coming soon labels (per stub Library/Push/History)
+  'soon.title':       'In arrivo',
+  'soon.libraryDesc': 'Gestisci jingle, brani e file audio della tua radio. Carica nuovi contenuti dal telefono e inseriscili in playlist.',
+  'soon.libraryF1':   'Upload audio dal telefono (mp3/m4a/wav)',
+  'soon.libraryF2':   'Lista jingle preconfigurati con uso e durata',
+  'soon.libraryF3':   'Insert in playlist subito o a fine brano',
+  'soon.pushDesc':    'Invia notifiche push agli ascoltatori della tua app radio. Annunci dirette, eventi speciali, alert.',
+  'soon.pushF1':      'Invio manuale con titolo + corpo',
+  'soon.pushF2':      'Storico notifiche inviate con tasso apertura',
+  'soon.pushF3':      'Template predefiniti (live, alert, promo)',
+  'soon.historyDesc': 'Visualizza lo storico dei brani trasmessi e dei comandi inviati alla regia.',
+  'soon.historyF1':   'Ultimi brani trasmessi con timestamp',
+  'soon.historyF2':   'Storico comandi (skip, jingle, stream URL)',
+  'soon.historyF3':   'Esportazione CSV per analisi',
 
   // Library
   'library.title': 'Libreria',

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../shared/widgets/coming_soon.dart';
 import '../../shared/widgets/page_header.dart';
 
 class LibraryPage extends StatelessWidget {
@@ -8,7 +9,16 @@ class LibraryPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(children: [
       PageHeader(title: 'tab.library'.tr, eyebrow: 'JINGLES · BRANI'),
-      const Expanded(child: Center(child: Text('Library — TODO', style: TextStyle(color: Colors.white54)))),
+      Expanded(child: ComingSoon(
+        icon: Icons.library_music_outlined,
+        title: 'soon.title'.tr,
+        description: 'soon.libraryDesc'.tr,
+        features: [
+          'soon.libraryF1'.tr,
+          'soon.libraryF2'.tr,
+          'soon.libraryF3'.tr,
+        ],
+      )),
     ]);
   }
 }
