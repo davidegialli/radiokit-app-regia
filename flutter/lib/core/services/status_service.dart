@@ -32,6 +32,10 @@ class StatusService extends GetxService {
 
   Timer? _timer;
   bool _started = false;
+  // Histeresi: servono N offline consecutivi per flippare lo stato a offline.
+  // Evita flicker quando il bridge salta un singolo heartbeat (soglia VPS = 30s).
+  static const _offlineDebounce = 2;
+  int _consecOffline = 0;
 
   void start() {
     if (_started) return;
@@ -51,6 +55,23 @@ class StatusService extends GetxService {
       final raw = await ApiService.to.status();
       if (raw['ok'] == false) return;
       final next = RegiaStatus.fromJson(raw);
+
+      // Histeresi: ignora un singolo poll offline isolato (flicker dovuto a
+      // VPS threshold 30s + occasionale skip heartbeat). Servono N offline
+      // consecutivi per flippare; se ne arriva anche uno solo non-offline,
+      // resettiamo il counter.
+      if (next.appState == RegiaAppState.offline) {
+        _consecOffline++;
+        if (_consecOffline < _offlineDebounce && status.value.appState != RegiaAppState.offline) {
+          // Manteniamo lo stato precedente, ma aggiorniamo gli altri campi
+          // (now_playing, listeners, ecc.) che potrebbero comunque essere validi
+          // dal precedente snapshot. In pratica: skip questo update offline.
+          return;
+        }
+      } else {
+        _consecOffline = 0;
+      }
+
       status.value = next;
       lastError.value = null;
       if (next.listeners != null) {
