@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/routing/app_routes.dart';
 import '../../core/services/api_service.dart';
+import '../../core/services/status_service.dart';
 import '../../core/services/storage_service.dart';
 import '../../core/services/ws_service.dart';
 import '../../shared/widgets/rk_toast.dart';
@@ -41,6 +42,7 @@ class ActivationController extends GetxController {
       }
 
       await WsService.to.connect();
+      StatusService.to.start();
       RkToast.show('activation.bridgeFound'.tr, kind: RkToastKind.success);
       Get.offAllNamed(AppRoutes.shell);
     } catch (e) {

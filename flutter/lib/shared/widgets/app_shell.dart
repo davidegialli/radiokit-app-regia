@@ -9,6 +9,10 @@ import '../../modules/stream_url/stream_url_binding.dart';
 import '../../modules/listeners/listeners_page.dart';
 import '../../modules/library/library_page.dart';
 
+/// Indice tab corrente, esposto in modo che altre pagine (es. Home con
+/// shortcut "Vai in onda") possano cambiare tab senza un secondo navigator.
+final RxInt shellTabIndex = 0.obs;
+
 /// Shell principale: header + body tab + bottom nav 5 voci.
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
@@ -18,7 +22,6 @@ class AppShell extends StatefulWidget {
 }
 
 class _AppShellState extends State<AppShell> {
-  int _i = 0;
   late final List<Widget> _pages;
 
   @override
@@ -36,12 +39,12 @@ class _AppShellState extends State<AppShell> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return Obx(() => Scaffold(
       backgroundColor: AppColors.bg,
-      body: SafeArea(child: _pages[_i]),
+      body: SafeArea(child: _pages[shellTabIndex.value]),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _i,
-        onTap: (v) => setState(() => _i = v),
+        currentIndex: shellTabIndex.value,
+        onTap: (v) => shellTabIndex.value = v,
         backgroundColor: AppColors.bgElev,
         selectedItemColor: AppColors.accent,
         unselectedItemColor: AppColors.text3,
@@ -56,6 +59,6 @@ class _AppShellState extends State<AppShell> {
           BottomNavigationBarItem(icon: const Icon(Icons.library_music_outlined),activeIcon: const Icon(Icons.library_music),label: 'tab.library'.tr),
         ],
       ),
-    );
+    ));
   }
 }

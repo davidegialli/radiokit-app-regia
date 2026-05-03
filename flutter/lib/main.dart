@@ -8,6 +8,7 @@ import 'core/i18n/translations.dart';
 import 'core/routing/app_pages.dart';
 import 'core/routing/app_routes.dart';
 import 'core/services/api_service.dart';
+import 'core/services/status_service.dart';
 import 'core/services/storage_service.dart';
 import 'core/services/ws_service.dart';
 import 'core/theme/app_theme.dart';
@@ -24,6 +25,7 @@ Future<void> main() async {
   Get.put(StorageService(), permanent: true);
   Get.put(ApiService(),     permanent: true);
   Get.put(WsService(),      permanent: true);
+  Get.put(StatusService(),  permanent: true);
 
   runApp(const RadioKitRegiaApp());
 }

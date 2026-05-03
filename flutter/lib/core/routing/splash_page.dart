@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../services/status_service.dart';
 import '../services/storage_service.dart';
 import '../services/ws_service.dart';
 import '../theme/app_colors.dart';
@@ -30,6 +31,7 @@ class _SplashPageState extends State<SplashPage> {
       // Se il WS non si connette in 5s, l'app entra comunque in modalità degraded.
       WsService.to.connect().timeout(const Duration(seconds: 5),
         onTimeout: () { /* degraded mode */ });
+      StatusService.to.start();
       Get.offAllNamed(AppRoutes.shell);
     } else {
       Get.offAllNamed(AppRoutes.activation);
