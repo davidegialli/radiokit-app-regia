@@ -6,7 +6,6 @@ import '../../core/theme/app_colors.dart';
 import '../../data/models/regia_status.dart';
 import '../../shared/widgets/page_header.dart';
 import '../../shared/widgets/rk_card.dart';
-import '../../shared/widgets/rk_field_row.dart';
 import 'on_air_controller.dart';
 
 class OnAirPage extends StatelessWidget {

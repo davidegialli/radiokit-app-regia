@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
-import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 
 import '../../core/services/api_service.dart';
@@ -9,28 +8,19 @@ import '../../shared/widgets/rk_toast.dart';
 
 /// Controller del tab On Air.
 /// Tutti i comandi vanno via /api/regia/?action=cmd → bridge handlers
-/// playlist.* (skip/prev/play/pause/stop/volume/runevent).
+/// playlist.* (skip/prev/play/pause/stop/volume).
 /// Lo stato now_playing arriva dal StatusService condiviso.
 class OnAirController extends GetxController {
   static OnAirController get to => Get.find<OnAirController>();
 
   final volume = 80.obs;
-  final eventCtrl = TextEditingController();
-  final eventName = ''.obs;
   final sending = ''.obs; // nome dell'azione in invio (per disabilitare i bottoni)
 
   Timer? _volumeDebounce;
 
   @override
-  void onInit() {
-    super.onInit();
-    eventCtrl.addListener(() => eventName.value = eventCtrl.text);
-  }
-
-  @override
   void onClose() {
     _volumeDebounce?.cancel();
-    eventCtrl.dispose();
     super.onClose();
   }
 
@@ -62,11 +52,5 @@ class OnAirController extends GetxController {
       // fire-and-forget: il debounce evita di inondare il bridge mentre l'utente trascina
       ApiService.to.cmdSend('playlist.volume', {'volume': volume.value}).catchError((_) => <String, dynamic>{});
     });
-  }
-
-  Future<void> runEvent() async {
-    final name = eventName.value.trim();
-    if (name.isEmpty) return;
-    await _send('playlist.jingle_eventname', '▶ $name', {'event': name});
   }
 }

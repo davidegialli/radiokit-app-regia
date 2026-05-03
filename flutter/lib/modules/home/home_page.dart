@@ -168,9 +168,6 @@ class _KpiGrid extends StatelessWidget {
       }
 
       // Niente KPI Bridge: alarm-only banner gestisce il caso problematico.
-      // svc usato solo per peak/trend.
-      assert(svc == StatusService.to);
-
       return Row(children: [
         Expanded(child: _Kpi(label: 'home.kpiListeners'.tr, value: listeners?.toString() ?? '—')),
         const SizedBox(width: 8),
