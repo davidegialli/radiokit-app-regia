@@ -55,12 +55,20 @@ const Map<String, String> itIT = {
   'home.quickGoLive':   'Vai in onda',
   'home.quickGoLiveSub':'Lancia diretta da URL stream',
   'home.dataMissing':   '— —',
-  // Listeners
+  // Listeners (Streaming output domain)
+  'listeners.aggregate': 'Ascoltatori totali',
+  'listeners.streams':   'Stream configurati',
+  'listeners.streamsEmpty':     'Nessuno stream configurato',
+  'listeners.streamsEmptyHint': 'Aggiungi gli URL nella tab Trasmissione del Timer',
+  'listeners.statsSoon':        'Stats per-stream individuali in arrivo (richiede aggiornamento Timer)',
   'listeners.subtitle':  'Stream principale (aggregato)',
   'listeners.history':   'Andamento (ultimi @n campioni)',
   'listeners.peak':      'Picco sessione',
   'listeners.empty':     'Nessun dato listener — il bridge non sta riportando il count',
   'listeners.upd':       'agg. @sec s',
+  // Stream tab — sorgenti relay
+  'stream.sourceTitle':  'Sorgente relay esterno',
+  'stream.recents.clear':'cancella',
 
   // On Air
   'onair.skip': 'Skip',

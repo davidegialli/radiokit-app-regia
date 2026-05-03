@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 
 import '../../core/services/api_service.dart';
+import '../../core/services/storage_service.dart';
 import '../../data/models/regia_command.dart';
 import '../../data/models/regia_status.dart';
 import '../../shared/widgets/rk_toast.dart';
@@ -42,10 +43,13 @@ class StreamUrlController extends GetxController {
   final loading = false.obs; // POST /stream_url_start in corso
   final localError = RxnString();
 
-  // ── Preset URL (caricati on-demand dal bridge) ─────────────────────
-  // Format: [{url:String, label:String, primary:bool}]
-  final presets = <Map<String, dynamic>>[].obs;
-  final presetsLoading = false.obs;
+  // ── Recenti URL sorgente (last N URLs lanciati con successo) ───────
+  // NB: NON sono gli stream output icecast/shoutcast (quelli stanno nella
+  // tab Streaming/Listener). Qui sono URL SORGENTE per il relay esterno
+  // (encoder, evento esterno, radio partner).
+  static const _recentsMax = 5;
+  static const _recentsKey = 'rkr_stream_recents';
+  final recents = <String>[].obs;
 
   // ── Polling timers ─────────────────────────────────────────────────
   Timer? _statusTimer;
@@ -96,10 +100,9 @@ class StreamUrlController extends GetxController {
   void onInit() {
     super.onInit();
     _wireText();
+    _loadRecents();
     _refreshStatus();
     _statusTimer = Timer.periodic(const Duration(seconds: 4), (_) => _refreshStatus());
-    // Carica i preset in background dopo il primo /status (non bloccante).
-    Future.delayed(const Duration(seconds: 1), loadPresets);
   }
 
   @override
@@ -150,14 +153,18 @@ class StreamUrlController extends GetxController {
     localError.value = null;
     try {
       final dMin = duration.value == '0' ? null : int.tryParse(duration.value);
+      final urlClean = url.value.trim();
       await ApiService.to.streamUrlStart({
-        'url': url.value.trim(),
+        'url': urlClean,
         'title': title.value.trim(),
         if (host.value.trim().isNotEmpty) 'host': host.value.trim(),
         if (dMin != null) 'duration_min': dMin,
         'start_mode': startMode.value.wireName,
         'auto_fallback': autoFallback.value,
       });
+
+      // Salva URL in recents locali (utile per quick-select alla prossima diretta)
+      _addToRecents(urlClean);
 
       // Il /stream_url_start non ritorna command_id del bridge_command,
       // ritorna session_id. Per la "conferma reale" basta osservare /status:
@@ -194,47 +201,39 @@ class StreamUrlController extends GetxController {
     }
   }
 
-  // ── Preset URL: invia comando + polla esito ─────────────────────────
-  Future<void> loadPresets({bool silent = true}) async {
-    if (presetsLoading.value || isOffline) return;
-    presetsLoading.value = true;
+  // ── Recents: persistenza locale via GetStorage ──────────────────────
+  void _loadRecents() {
     try {
-      final sent = await ApiService.to.cmdSend('monitor.streams_preset', const {});
-      final cid = sent['command_id']?.toString();
-      if (cid == null || cid.isEmpty) return;
-
-      // Polling fino a done/failed (max 8s — bridge polla ogni 5s)
-      final deadline = DateTime.now().add(const Duration(seconds: 10));
-      while (DateTime.now().isBefore(deadline)) {
-        await Future.delayed(const Duration(milliseconds: 800));
-        final r = await ApiService.to.cmdResult(cid);
-        final st = (r['status'] ?? '').toString();
-        if (st == 'done') {
-          final result = r['result'];
-          if (result is Map && result['presets'] is List) {
-            final list = (result['presets'] as List)
-                .whereType<Map>()
-                .map((e) => Map<String, dynamic>.from(e))
-                .where((e) => (e['url'] ?? '').toString().isNotEmpty)
-                .toList();
-            presets.assignAll(list);
-          }
-          return;
-        }
-        if (st == 'failed') return;
-      }
-    } catch (_) {
-      if (!silent) RkToast.show('error.network'.tr, kind: RkToastKind.error);
-    } finally {
-      presetsLoading.value = false;
-    }
+      final raw = StorageService.to.read<List>(_recentsKey) ?? const [];
+      recents.assignAll(raw.cast<String>());
+    } catch (_) {}
   }
 
-  /// Tap su un preset → riempie il form URL.
-  void applyPreset(String url) {
+  void _saveRecents() {
+    try {
+      StorageService.to.write(_recentsKey, recents.toList());
+    } catch (_) {}
+  }
+
+  void _addToRecents(String url) {
+    final u = url.trim();
+    if (u.isEmpty) return;
+    recents.remove(u);                // sposta in cima se già presente
+    recents.insert(0, u);
+    while (recents.length > _recentsMax) recents.removeLast();
+    _saveRecents();
+  }
+
+  /// Tap su un recente → riempie il form URL.
+  void applyRecent(String url) {
     if (formLocked) return;
     urlCtrl.text = url;
     this.url.value = url;
+  }
+
+  void clearRecents() {
+    recents.clear();
+    _saveRecents();
   }
 
   // ── Azione: Stop ──────────────────────────────────────────────────

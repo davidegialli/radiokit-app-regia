@@ -294,21 +294,18 @@ class StreamUrlPage extends GetView<StreamUrlController> {
     return RkCard(
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          const Text('Sorgente stream',
-            style: TextStyle(fontFamily: 'GeistMono', fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.text2, letterSpacing: 1.2)),
-          Obx(() => controller.presets.isEmpty
+          Text('stream.sourceTitle'.tr,
+            style: const TextStyle(fontFamily: 'GeistMono', fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.text2, letterSpacing: 1.2)),
+          Obx(() => controller.recents.isEmpty
               ? const SizedBox.shrink()
               : GestureDetector(
-                  onTap: controller.presetsLoading.value ? null : () => controller.loadPresets(silent: false),
-                  child: Text(
-                    controller.presetsLoading.value ? '…' : '↻',
-                    style: const TextStyle(fontFamily: 'GeistMono', fontSize: 12, color: AppColors.text3),
-                  ),
+                  onTap: controller.formLocked ? null : controller.clearRecents,
+                  child: Text('stream.recents.clear'.tr,
+                    style: const TextStyle(fontFamily: 'GeistMono', fontSize: 9, color: AppColors.text3, letterSpacing: 0.5)),
                 )),
         ]),
         const SizedBox(height: 10),
-        _presetChips(),
-        const SizedBox(height: 4),
+        _recentsChips(),
         RkFieldRow(
           label: 'stream.urlLabel'.tr,
           hint: 'stream.urlHint'.tr,
@@ -435,20 +432,21 @@ class StreamUrlPage extends GetView<StreamUrlController> {
     );
   }
 
-  Widget _presetChips() {
+  // Recents = ultimi URL SORGENTE lanciati con successo (encoder remoti,
+  // eventi esterni, radio partner). Diversi dagli stream OUTPUT
+  // (icecast/shoutcast) che vivono nella tab Streaming.
+  Widget _recentsChips() {
     return Obx(() {
-      if (controller.presets.isEmpty) return const SizedBox.shrink();
+      if (controller.recents.isEmpty) return const SizedBox.shrink();
       return Padding(
-        padding: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.only(bottom: 10),
         child: Wrap(
           spacing: 6, runSpacing: 6,
-          children: controller.presets.map((p) {
-            final url = (p['url'] ?? '').toString();
-            final label = (p['label'] ?? url).toString();
-            final primary = p['primary'] == true;
+          children: controller.recents.map((url) {
             final selected = url == controller.url.value;
+            final short = _shortUrl(url);
             return GestureDetector(
-              onTap: controller.formLocked ? null : () => controller.applyPreset(url),
+              onTap: controller.formLocked ? null : () => controller.applyRecent(url),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
@@ -459,12 +457,10 @@ class StreamUrlPage extends GetView<StreamUrlController> {
                   ),
                 ),
                 child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  if (primary) ...[
-                    const Icon(Icons.star, size: 10, color: AppColors.accent),
-                    const SizedBox(width: 4),
-                  ],
+                  const Icon(Icons.history, size: 11, color: AppColors.text3),
+                  const SizedBox(width: 5),
                   Text(
-                    label.length > 28 ? '${label.substring(0, 26)}…' : label,
+                    short.length > 28 ? '${short.substring(0, 26)}…' : short,
                     style: TextStyle(
                       fontFamily: 'GeistMono',
                       fontSize: 10,

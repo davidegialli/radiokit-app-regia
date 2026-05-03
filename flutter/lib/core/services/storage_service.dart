@@ -53,4 +53,9 @@ class StorageService extends GetxService {
     radioId = null;
     userName = null;
   }
+
+  // ── Generic key/value (per dati di feature specifiche) ──────────────
+  T? read<T>(String key) => _box.read<T>(key);
+  void write(String key, dynamic value) => _box.write(key, value);
+  void remove(String key) => _box.remove(key);
 }
