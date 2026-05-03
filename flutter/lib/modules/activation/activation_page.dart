@@ -237,77 +237,22 @@ class _HeroHalo extends StatefulWidget {
   State<_HeroHalo> createState() => _HeroHaloState();
 }
 
-class _HeroHaloState extends State<_HeroHalo> with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 1800))..repeat();
-  }
-
-  @override
-  void dispose() { _ctrl.dispose(); super.dispose(); }
-
+class _HeroHaloState extends State<_HeroHalo> {
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 132, height: 132,
-      child: Stack(alignment: Alignment.center, children: [
-        // 2 anelli pulsanti
-        AnimatedBuilder(
-          animation: _ctrl,
-          builder: (_, __) {
-            return Transform.scale(
-              scale: 1 + 0.30 * _ctrl.value,
-              child: Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: AppColors.accent.withOpacity(0.55 * (1 - _ctrl.value)),
-                    width: 1.5,
-                  ),
-                ),
-              ),
-            );
-          },
+    // Logo "pulito": niente glow rosso ne anelli pulsanti — il logo ha gia'
+    // i suoi anelli broadcast e il dot ON AIR incorporati.
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(28),
+      child: Image.asset(
+        'assets/icons/app_icon.png',
+        width: 132, height: 132,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => const SizedBox(
+          width: 132, height: 132,
+          child: Icon(Icons.podcasts, size: 64, color: AppColors.text2),
         ),
-        AnimatedBuilder(
-          animation: _ctrl,
-          builder: (_, __) {
-            final v = (_ctrl.value + 0.4) % 1.0;
-            return Transform.scale(
-              scale: 1 + 0.18 * v,
-              child: Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: AppColors.accent.withOpacity(0.4 * (1 - v)),
-                    width: 1.5,
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-        // Disco centrale con logo app
-        Container(
-          width: 96, height: 96,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: AppColors.bgElev,
-            boxShadow: [
-              BoxShadow(color: AppColors.accent.withOpacity(0.45), blurRadius: 32),
-            ],
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: Image.asset(
-            'assets/icons/app_icon.png',
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => const Icon(Icons.podcasts, size: 42, color: Colors.white),
-          ),
-        ),
-      ]),
+      ),
     );
   }
 }
