@@ -59,6 +59,16 @@ jobs:
             sed -i -E 's#("org\.jetbrains\.kotlin\.android"\s+version\s+")[0-9.]+(")#\12.0.21\2#' android/settings.gradle
             echo "--- patched android/settings.gradle ---"
             grep -E "kotlin\.android" android/settings.gradle || true
+            # Forza mavenCentral() nei repository (era assente in alcuni runner
+            # con cache invalidata, causa: kotlin-stdlib 2.0.21 + OneSignal 5.8.0
+            # + kotlinx-coroutines non risolti perche' presenti SOLO su Maven Central).
+            if ! grep -q "mavenCentral" android/settings.gradle; then
+              # Inserisce mavenCentral() dopo google() in entrambi pluginManagement
+              # e dependencyResolutionManagement.
+              sed -i -E '/^\s*repositories\s*\{/,/^\s*\}\s*$/ s#(google\(\))#\1\n        mavenCentral()#' android/settings.gradle
+              echo "--- patched mavenCentral() in settings.gradle ---"
+              grep -nE "google|mavenCentral|gradlePluginPortal" android/settings.gradle || true
+            fi
           fi
           # SDK levels coerenti con le deps moderne
           if [ -f android/app/build.gradle ]; then
