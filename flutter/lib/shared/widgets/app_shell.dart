@@ -56,7 +56,7 @@ class _AppShellState extends State<AppShell> {
           BottomNavigationBarItem(icon: const Icon(Icons.play_circle_outline),  activeIcon: const Icon(Icons.play_circle),  label: 'tab.onAir'.tr),
           BottomNavigationBarItem(icon: const Icon(Icons.podcasts_outlined),    activeIcon: const Icon(Icons.podcasts),     label: 'tab.stream'.tr),
           BottomNavigationBarItem(icon: const Icon(Icons.people_outline),       activeIcon: const Icon(Icons.people),       label: 'tab.listeners'.tr),
-          BottomNavigationBarItem(icon: const Icon(Icons.library_music_outlined),activeIcon: const Icon(Icons.library_music),label: 'tab.library'.tr),
+          BottomNavigationBarItem(icon: const Icon(Icons.mic_none),             activeIcon: const Icon(Icons.mic),          label: 'tab.library'.tr),
         ],
       ),
     ));

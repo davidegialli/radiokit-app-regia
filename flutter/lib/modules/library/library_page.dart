@@ -8,7 +8,7 @@ class LibraryPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(children: [
-      PageHeader(title: 'tab.library'.tr, eyebrow: 'JINGLES · BRANI'),
+      PageHeader(title: 'tab.library'.tr, eyebrow: 'PARLATO · JINGLE'),
       Expanded(child: ComingSoon(
         icon: Icons.library_music_outlined,
         title: 'soon.title'.tr,

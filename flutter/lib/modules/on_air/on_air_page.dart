@@ -16,7 +16,7 @@ class OnAirPage extends StatelessWidget {
     // Lazy registrazione (l'AppShell non chiama il binding di OnAir all'init)
     Get.lazyPut(() => OnAirController(), fenix: true);
     return Column(children: [
-      PageHeader(title: 'tab.onAir'.tr, eyebrow: 'header.live'.tr),
+      PageHeader(title: 'tab.onAir'.tr, eyebrow: 'PLAYBACK · RADIOBOSS'),
       Expanded(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),

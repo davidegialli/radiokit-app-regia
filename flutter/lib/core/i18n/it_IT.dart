@@ -15,10 +15,10 @@ const Map<String, String> itIT = {
 
   // Tab bar
   'tab.home': 'Home',
-  'tab.onAir': 'On Air',
-  'tab.stream': 'Stream',
-  'tab.listeners': 'Listener',
-  'tab.library': 'Libreria',
+  'tab.onAir': 'RadioBOSS',
+  'tab.stream': 'Diretta',
+  'tab.listeners': 'Streaming',
+  'tab.library': 'Audio',
   'tab.push': 'Push',
   'tab.history': 'Storico',
   'tab.account': 'Account',
@@ -167,10 +167,10 @@ const Map<String, String> itIT = {
 
   // Coming soon labels (per stub Library/Push/History)
   'soon.title':       'In arrivo',
-  'soon.libraryDesc': 'Gestisci jingle, brani e file audio della tua radio. Carica nuovi contenuti dal telefono e inseriscili in playlist.',
-  'soon.libraryF1':   'Upload audio dal telefono (mp3/m4a/wav)',
-  'soon.libraryF2':   'Lista jingle preconfigurati con uso e durata',
-  'soon.libraryF3':   'Insert in playlist subito o a fine brano',
+  'soon.libraryDesc': 'Registra un parlato dal telefono (es. aggiornamento traffico, meteo, news flash) o carica un jingle. Mandalo in onda dopo il brano corrente con normalizzazione automatica.',
+  'soon.libraryF1':   '🎤 Registra parlato live (mic + waveform + timer)',
+  'soon.libraryF2':   '📁 Carica jingle dalla galleria (mp3/m4a/wav)',
+  'soon.libraryF3':   '✓ Insert dopo brano corrente · Normalize a 0 dB automatico',
   'soon.pushDesc':    'Invia notifiche push agli ascoltatori della tua app radio. Annunci dirette, eventi speciali, alert.',
   'soon.pushF1':      'Invio manuale con titolo + corpo',
   'soon.pushF2':      'Storico notifiche inviate con tasso apertura',
