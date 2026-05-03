@@ -44,7 +44,7 @@ class HomePage extends StatelessWidget {
   }
 }
 
-// ─── HERO: stato globale ────────────────────────────────────
+// ─── HERO: focus su titolo della radio + alert solo se reale problema ──
 class _StatusHero extends StatelessWidget {
   const _StatusHero();
 
@@ -52,27 +52,45 @@ class _StatusHero extends StatelessWidget {
   Widget build(BuildContext context) {
     return Obx(() {
       final s = StatusService.to.status.value;
-      final st = s.appState;
-      final isLive = st == RegiaAppState.live;
-      final isWaiting = st == RegiaAppState.requested || st == RegiaAppState.scheduled;
-      final highlight = isLive || isWaiting;
+      final isLive = s.appState == RegiaAppState.live;
+      final problem = s.appState == RegiaAppState.offline
+                   || s.appState == RegiaAppState.error;
 
-      String chip;
-      switch (st) {
-        case RegiaAppState.live:      chip = 'home.statusOnAir'.tr; break;
-        case RegiaAppState.scheduled: chip = 'stream.state.scheduled'.tr.toUpperCase(); break;
-        case RegiaAppState.requested: chip = 'stream.state.requested'.tr.toUpperCase(); break;
-        case RegiaAppState.offline:   chip = 'home.bridgeOffline'.tr.toUpperCase(); break;
-        case RegiaAppState.error:     chip = 'stream.state.error'.tr.toUpperCase(); break;
-        case RegiaAppState.unknown:   chip = 'stream.state.unknown'.tr.toUpperCase(); break;
-        case RegiaAppState.idle:      chip = 'home.statusAutoDj'.tr; break;
+      // Banner d'allarme rosso se c'e' un problema reale (offline persistente
+      // o errore). Histeresi gestita lato StatusService.
+      if (problem) {
+        return Container(
+          padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+          decoration: BoxDecoration(
+            color: AppColors.warn.withOpacity(0.12),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.warn.withOpacity(0.5)),
+          ),
+          child: Row(children: [
+            const Icon(Icons.warning_amber_rounded, color: AppColors.warn, size: 28),
+            const SizedBox(width: 12),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(
+                s.appState == RegiaAppState.offline
+                    ? 'home.bridgeOffline'.tr
+                    : 'stream.state.error'.tr,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.text),
+              ),
+              const SizedBox(height: 2),
+              Text('stream.state.offlineHint'.tr,
+                style: const TextStyle(fontSize: 12, color: AppColors.text3, height: 1.4)),
+            ])),
+          ]),
+        );
       }
 
+      // Caso normale: mostra IN ONDA se live, altrimenti niente chrome di stato.
+      // Il NowPlaying card sotto fa il resto.
       return Container(
         padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(14),
-          gradient: highlight
+          gradient: isLive
               ? RadialGradient(
                   center: const Alignment(0, -1), radius: 1.2,
                   colors: [AppColors.accent.withOpacity(0.18), AppColors.surface, AppColors.bgElev],
@@ -81,71 +99,24 @@ class _StatusHero extends StatelessWidget {
               : const LinearGradient(
                   begin: Alignment.topCenter, end: Alignment.bottomCenter,
                   colors: [AppColors.surface, AppColors.bgElev]),
-          border: Border.all(color: highlight ? AppColors.accent.withOpacity(0.4) : AppColors.hairlineSoft),
+          border: Border.all(color: isLive ? AppColors.accent.withOpacity(0.4) : AppColors.hairlineSoft),
         ),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [
-            RkStatusChip(text: chip, active: isLive),
-            const Spacer(),
-            _BridgeDot(),
-          ]),
-          const SizedBox(height: 16),
+          if (isLive) ...[
+            RkStatusChip(text: 'home.statusOnAir'.tr, active: true),
+            const SizedBox(height: 14),
+          ],
           Text(
-            _stateLabel(st),
+            isLive ? 'home.statusOnAir'.tr : 'app.name'.tr,
             style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: AppColors.text, letterSpacing: -0.3),
           ),
           const SizedBox(height: 4),
           Text(
-            _stateSub(st),
+            isLive ? 'stream.state.liveHint'.tr : ' ',
             style: const TextStyle(fontSize: 12, color: AppColors.text3, height: 1.4),
           ),
         ]),
       );
-    });
-  }
-
-  String _stateLabel(RegiaAppState st) {
-    switch (st) {
-      case RegiaAppState.live:      return 'home.statusOnAir'.tr;
-      case RegiaAppState.idle:      return 'home.statusAutoDj'.tr;
-      default:                      return 'stream.state.${st.name}'.tr;
-    }
-  }
-
-  String _stateSub(RegiaAppState st) {
-    switch (st) {
-      case RegiaAppState.live:      return 'stream.state.liveHint'.tr;
-      case RegiaAppState.idle:      return 'stream.state.idleHint'.tr;
-      case RegiaAppState.offline:   return 'stream.state.offlineHint'.tr;
-      case RegiaAppState.requested: return 'stream.state.requestedHint'.tr;
-      case RegiaAppState.scheduled: return 'stream.state.scheduledHint'.tr;
-      case RegiaAppState.error:     return '';
-      case RegiaAppState.unknown:   return '';
-    }
-  }
-}
-
-class _BridgeDot extends StatelessWidget {
-  const _BridgeDot();
-  @override
-  Widget build(BuildContext context) {
-    return Obx(() {
-      final s = StatusService.to.status.value;
-      final age = s.bridgeAgeSec;
-      final online = StatusService.to.bridgeOnline;
-      final color = online ? AppColors.autoDj : AppColors.text3;
-      final txt = online
-          ? 'home.bridgeOnline'.tr.toUpperCase()
-          : 'home.bridgeOffline'.tr.toUpperCase();
-      return Row(children: [
-        Container(width: 6, height: 6, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-        const SizedBox(width: 6),
-        Text(txt, style: TextStyle(fontFamily: 'GeistMono', fontSize: 9, fontWeight: FontWeight.w600, color: color, letterSpacing: 1.0)),
-        if (age != null && age >= 0) ...[
-          const SizedBox(width: 6),
-          Text('${age}s', style: const TextStyle(fontFamily: 'GeistMono', fontSize: 9, color: AppColors.text4)),
-        ],
-      ]);
     });
   }
 }
@@ -196,10 +167,9 @@ class _KpiGrid extends StatelessWidget {
         else                { trendStr = '→'; trendColor = AppColors.text2; }
       }
 
-      String bridgeStr;
-      Color bridgeColor;
-      if (svc.bridgeOnline) { bridgeStr = 'ON'; bridgeColor = AppColors.autoDj; }
-      else                  { bridgeStr = 'OFF'; bridgeColor = AppColors.text3; }
+      // Niente KPI Bridge: alarm-only banner gestisce il caso problematico.
+      // svc usato solo per peak/trend.
+      assert(svc == StatusService.to);
 
       return Row(children: [
         Expanded(child: _Kpi(label: 'home.kpiListeners'.tr, value: listeners?.toString() ?? '—')),
@@ -207,8 +177,6 @@ class _KpiGrid extends StatelessWidget {
         Expanded(child: _Kpi(label: 'home.kpiPeak'.tr,      value: peak?.toString() ?? '—')),
         const SizedBox(width: 8),
         Expanded(child: _Kpi(label: 'home.kpiTrend'.tr,     value: trendStr, valueColor: trendColor)),
-        const SizedBox(width: 8),
-        Expanded(child: _Kpi(label: 'home.kpiBridge'.tr,    value: bridgeStr, valueColor: bridgeColor)),
       ]);
     });
   }

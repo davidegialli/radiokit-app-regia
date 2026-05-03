@@ -28,7 +28,7 @@ class OnAirPage extends StatelessWidget {
             SizedBox(height: 14),
             _VolumeCard(),
             SizedBox(height: 14),
-            _RunEventCard(),
+            _AudioUploadPlaceholder(),
           ]),
         ),
       ),
@@ -206,50 +206,38 @@ class _VolumeCard extends StatelessWidget {
   }
 }
 
-// ─── Run event ────────────────────────────────────────────────
-class _RunEventCard extends StatelessWidget {
-  const _RunEventCard();
+// ─── Audio upload placeholder (coming soon) ──────────────────
+// Sostituisce il vecchio "Run Event by name" che era inutile da solo:
+// il vero feature e' upload audio dal telefono → bridge → insert in
+// RadioBOSS via playlist.insert_audio (handler bridge gia' esistente).
+class _AudioUploadPlaceholder extends StatelessWidget {
+  const _AudioUploadPlaceholder();
 
   @override
   Widget build(BuildContext context) {
-    final c = OnAirController.to;
     return RkCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text('onair.runEvent'.tr,
+      Text('onair.uploadTitle'.tr,
         style: const TextStyle(fontFamily: 'GeistMono', fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.text2, letterSpacing: 1.2)),
-      const SizedBox(height: 12),
-      RkFieldRow(
-        label: 'onair.eventName'.tr,
-        hint: 'onair.eventHint'.tr,
-        child: Obx(() => TextField(
-          controller: c.eventCtrl,
-          enabled: c.sending.value.isEmpty,
-          style: const TextStyle(fontFamily: 'GeistMono', fontSize: 12),
-          decoration: const InputDecoration(hintText: 'jingle_news'),
-        )),
-      ),
-      const SizedBox(height: 10),
-      Obx(() {
-        final canRun = c.eventName.value.trim().isNotEmpty
-                     && c.sending.value.isEmpty
-                     && StatusService.to.bridgeOnline;
-        return GestureDetector(
-          onTap: canRun ? c.runEvent : null,
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: canRun ? AppColors.accent : AppColors.surface2,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text('onair.runBtn'.tr,
-              style: TextStyle(
-                fontSize: 13, fontWeight: FontWeight.w600,
-                color: canRun ? Colors.white : AppColors.text4,
-              )),
+      const SizedBox(height: 14),
+      Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+        Container(
+          width: 44, height: 44,
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: AppColors.hairlineSoft),
           ),
-        );
-      }),
+          child: const Icon(Icons.mic_none, size: 22, color: AppColors.text3),
+        ),
+        const SizedBox(width: 12),
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('soon.title'.tr,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.text)),
+          const SizedBox(height: 2),
+          Text('onair.uploadDesc'.tr,
+            style: const TextStyle(fontSize: 11, color: AppColors.text3, height: 1.4)),
+        ])),
+      ]),
     ]));
   }
 }
