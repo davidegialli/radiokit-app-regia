@@ -4,7 +4,8 @@ import 'package:get/get.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../data/models/regia_command.dart';
-import '../../data/models/stream_launch.dart';
+import '../../data/models/regia_status.dart';
+import '../../data/models/stream_launch.dart' show StreamHealth;
 import '../../shared/widgets/page_header.dart';
 import '../../shared/widgets/rk_button.dart';
 import '../../shared/widgets/rk_card.dart';
@@ -16,7 +17,6 @@ import '../../shared/widgets/rk_toggle.dart';
 import 'stream_url_controller.dart';
 import 'widgets/broadcast_halo.dart';
 import 'widgets/route_diagram.dart';
-import 'widgets/telem_tile.dart';
 
 class StreamUrlPage extends GetView<StreamUrlController> {
   const StreamUrlPage({super.key});
@@ -32,30 +32,111 @@ class StreamUrlPage extends GetView<StreamUrlController> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            _nowPlaying(),
+            const SizedBox(height: 14),
             _hero(),
             const SizedBox(height: 14),
-            Obx(() => controller.isStreaming ? _telemetry() : const SizedBox.shrink()),
-            Obx(() => controller.isStreaming ? const SizedBox(height: 14) : const SizedBox.shrink()),
+            Obx(() => controller.isLive ? _liveTelemetry() : const SizedBox.shrink()),
+            Obx(() => controller.isLive ? const SizedBox(height: 14) : const SizedBox.shrink()),
             _sourceForm(),
             const SizedBox(height: 14),
             _routing(),
-            const SizedBox(height: 14),
-            _recent(),
           ]),
         ),
       ),
     ]);
   }
 
+  // ─── NOW PLAYING ─────────────────────────────────
+  // Card sempre visibile in alto: titolo + artista reali da RadioBOSS.
+  Widget _nowPlaying() {
+    return Obx(() {
+      final s = controller.status.value;
+      final np = s.nowPlaying;
+      final hasTrack = np != null && !np.isEmpty;
+      final age = s.bridgeAgeSec;
+
+      return RkCard(
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            Text('stream.now.title'.tr,
+              style: const TextStyle(fontFamily: 'GeistMono', fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.text2, letterSpacing: 1.2)),
+            if (s.appState != RegiaAppState.unknown)
+              _bridgeDot(s.appState, age),
+          ]),
+          const SizedBox(height: 10),
+          if (!hasTrack)
+            Text('stream.now.empty'.tr,
+              style: const TextStyle(fontSize: 14, color: AppColors.text3))
+          else ...[
+            Text(np.title,
+              maxLines: 1, overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.text, letterSpacing: -0.1)),
+            const SizedBox(height: 2),
+            Text(np.artist,
+              maxLines: 1, overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 12, color: AppColors.text3)),
+          ],
+          const SizedBox(height: 10),
+          Row(children: [
+            if (s.listeners != null) ...[
+              const Icon(Icons.headphones_outlined, size: 12, color: AppColors.text3),
+              const SizedBox(width: 4),
+              Text(
+                'stream.now.listeners'.tr.replaceAll('@n', s.listeners.toString()),
+                style: const TextStyle(fontFamily: 'GeistMono', fontSize: 10, color: AppColors.text3),
+              ),
+            ],
+            if (s.relayActive) ...[
+              const SizedBox(width: 4),
+              Text('stream.now.relayOn'.tr,
+                style: const TextStyle(fontFamily: 'GeistMono', fontSize: 10, color: AppColors.accent)),
+            ],
+            const Spacer(),
+            if (age != null && age >= 0)
+              Text('stream.now.bridgeAge'.tr.replaceAll('@sec', age.toString()),
+                style: const TextStyle(fontFamily: 'GeistMono', fontSize: 9, color: AppColors.text4)),
+          ]),
+        ]),
+      );
+    });
+  }
+
+  Widget _bridgeDot(RegiaAppState st, int? age) {
+    final stale = age == null || age > 30;
+    Color c;
+    String label;
+    if (st == RegiaAppState.offline || stale) {
+      c = AppColors.text3;
+      label = 'OFFLINE';
+    } else if (st == RegiaAppState.live) {
+      c = AppColors.accent;
+      label = 'LIVE';
+    } else {
+      c = AppColors.autoDj;
+      label = 'ONLINE';
+    }
+    return Row(children: [
+      Container(width: 6, height: 6, decoration: BoxDecoration(shape: BoxShape.circle, color: c)),
+      const SizedBox(width: 6),
+      Text(label, style: TextStyle(fontFamily: 'GeistMono', fontSize: 9, fontWeight: FontWeight.w600, color: c, letterSpacing: 1.0)),
+    ]);
+  }
+
   // ─── HERO ────────────────────────────────────────
+  // Card grande con: status chip, halo, titolo stato, hint, CTA.
   Widget _hero() {
     return Obx(() {
-      final streaming = controller.isStreaming;
+      final st = controller.appState;
+      final isLive = st == RegiaAppState.live;
+      final isWaiting = st == RegiaAppState.requested || st == RegiaAppState.scheduled;
+      final highlight = isLive || isWaiting;
+
       return Container(
         padding: const EdgeInsets.fromLTRB(16, 20, 16, 18),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(14),
-          gradient: streaming
+          gradient: highlight
               ? RadialGradient(
                   center: const Alignment(0, -1),
                   radius: 1.2,
@@ -66,95 +147,113 @@ class StreamUrlPage extends GetView<StreamUrlController> {
                   begin: Alignment.topCenter, end: Alignment.bottomCenter,
                   colors: [AppColors.surface, AppColors.bgElev],
                 ),
-          border: Border.all(color: streaming ? AppColors.accent.withOpacity(0.4) : AppColors.hairlineSoft),
+          border: Border.all(color: highlight ? AppColors.accent.withOpacity(0.4) : AppColors.hairlineSoft),
         ),
         child: Column(children: [
-          RkStatusChip(
-            text: streaming ? 'stream.status.live'.tr : 'stream.status.ready'.tr,
-            active: streaming,
-          ),
+          RkStatusChip(text: _chipFor(st), active: isLive),
           const SizedBox(height: 14),
-          BroadcastHalo(streaming: streaming, health: controller.health.value),
+          BroadcastHalo(streaming: highlight, health: StreamHealth.ok),
           const SizedBox(height: 14),
           SizedBox(
-            height: 60,
+            height: 70,
             child: Column(children: [
               Text(
-                streaming ? controller.title.value : 'stream.title'.tr,
+                _stateLabel(st),
                 textAlign: TextAlign.center,
                 style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.text, letterSpacing: -0.1),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 6),
               Text(
-                streaming
-                    ? '${'stream.hostLabel'.tr.toLowerCase()}: ${controller.host.value}'
-                    : 'stream.subtitle'.tr,
+                _stateSubtitle(st),
                 textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(fontSize: 11, color: AppColors.text3, height: 1.4),
               ),
             ]),
           ),
           const SizedBox(height: 14),
-          if (!streaming)
-            RkButton(
-              fullWidth: true,
-              size: RkBtnSize.lg,
-              icon: Icons.podcasts,
-              onPressed: controller.canStart ? controller.start : null,
-              child: Text(controller.probing.value ? 'stream.cta.probing'.tr : 'stream.cta.go'.tr),
-            )
-          else
-            RkButton(
-              fullWidth: true,
-              size: RkBtnSize.lg,
-              icon: Icons.stop,
-              onPressed: controller.stop,
-              child: Text('stream.cta.stop'.tr),
-            ),
+          _ctaFor(st),
         ]),
       );
     });
   }
 
-  // ─── TELEMETRY ───────────────────────────────────
-  Widget _telemetry() {
+  String _chipFor(RegiaAppState st) {
+    switch (st) {
+      case RegiaAppState.live:      return 'stream.status.live'.tr;
+      case RegiaAppState.scheduled: return 'stream.state.scheduled'.tr.toUpperCase();
+      case RegiaAppState.requested: return 'stream.state.requested'.tr.toUpperCase();
+      case RegiaAppState.offline:   return 'stream.state.offline'.tr.toUpperCase();
+      case RegiaAppState.error:     return 'stream.state.error'.tr.toUpperCase();
+      case RegiaAppState.unknown:   return 'stream.state.unknown'.tr.toUpperCase();
+      case RegiaAppState.idle:      return 'stream.status.ready'.tr;
+    }
+  }
+
+  String _stateLabel(RegiaAppState st) {
+    if (st == RegiaAppState.live && controller.sessionTitle != null) {
+      return controller.sessionTitle!;
+    }
+    return 'stream.state.${st.name}'.tr;
+  }
+
+  String _stateSubtitle(RegiaAppState st) {
+    switch (st) {
+      case RegiaAppState.offline:   return 'stream.state.offlineHint'.tr;
+      case RegiaAppState.idle:      return 'stream.subtitle'.tr;
+      case RegiaAppState.requested: return 'stream.state.requestedHint'.tr;
+      case RegiaAppState.scheduled:
+        final np = controller.status.value.nowPlaying;
+        if (np != null && !np.isEmpty) {
+          return '${'stream.state.scheduledHint'.tr}: ${np.title}';
+        }
+        return 'stream.state.scheduledHint'.tr;
+      case RegiaAppState.live:      return 'stream.state.liveHint'.tr;
+      case RegiaAppState.error:     return controller.localError.value ?? '';
+      case RegiaAppState.unknown:   return '';
+    }
+  }
+
+  Widget _ctaFor(RegiaAppState st) {
+    final loading = controller.loading.value;
+    if (st == RegiaAppState.offline || st == RegiaAppState.unknown) {
+      return RkButton(
+        fullWidth: true, size: RkBtnSize.lg,
+        icon: Icons.cloud_off,
+        onPressed: null,
+        child: Text('stream.cta.go'.tr),
+      );
+    }
+    if (st == RegiaAppState.idle) {
+      return RkButton(
+        fullWidth: true, size: RkBtnSize.lg,
+        icon: Icons.podcasts,
+        onPressed: controller.canStart ? controller.start : null,
+        child: Text(loading ? 'stream.cta.probing'.tr : 'stream.cta.go'.tr),
+      );
+    }
+    // requested | scheduled | live | error → STOP
+    return RkButton(
+      fullWidth: true, size: RkBtnSize.lg,
+      icon: Icons.stop,
+      onPressed: loading ? null : controller.stop,
+      child: Text('stream.cta.stop'.tr),
+    );
+  }
+
+  // ─── LIVE TELEMETRY (semplificato: solo elapsed + duration bar) ──
+  Widget _liveTelemetry() {
     return RkCard(
       child: Obx(() {
-        final h = controller.health.value;
-        final hLabel = h == StreamHealth.ok ? 'stream.health.ok'.tr
-                     : h == StreamHealth.buffering ? 'stream.health.buffering'.tr
-                     : 'stream.health.down'.tr;
         return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             Text('stream.telem.title'.tr,
               style: const TextStyle(fontFamily: 'GeistMono', fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.text2, letterSpacing: 1.2)),
             Text(controller.fmtElapsed(),
-              style: const TextStyle(fontFamily: 'GeistMono', fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.accent)),
+              style: const TextStyle(fontFamily: 'GeistMono', fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.accent)),
           ]),
-          const SizedBox(height: 10),
-          Row(children: [
-            Expanded(child: TelemTile(
-              label: 'stream.telem.source'.tr,
-              value: hLabel,
-              unit: controller.srcCodec.value.isEmpty ? '—' : controller.srcCodec.value,
-              good: h == StreamHealth.ok,
-              warn: h == StreamHealth.buffering,
-            )),
-            const SizedBox(width: 8),
-            Expanded(child: TelemTile(
-              label: 'stream.telem.bitrate'.tr,
-              value: controller.srcBitrate.value.replaceAll(' kbps', '').isEmpty
-                  ? '—' : controller.srcBitrate.value.replaceAll(' kbps', ''),
-              unit: 'kbps',
-            )),
-            const SizedBox(width: 8),
-            Expanded(child: TelemTile(
-              label: 'stream.telem.received'.tr,
-              value: controller.fmtBytes(),
-              unit: 'tot',
-            )),
-          ]),
-          if (controller.duration.value != '0' && controller.session.value?.durationMin != null) ...[
+          if (controller.sessionDurationMin != null) ...[
             const SizedBox(height: 12),
             const Divider(height: 1),
             const SizedBox(height: 12),
@@ -167,8 +266,8 @@ class StreamUrlPage extends GetView<StreamUrlController> {
 
   Widget _durationBar() {
     return Obx(() {
-      final dMin = controller.session.value?.durationMin ?? 0;
-      final progress = dMin > 0 ? (controller.elapsedSec.value / (dMin * 60)).clamp(0.0, 1.0) : 0.0;
+      final dMin = controller.sessionDurationMin ?? 0;
+      final progress = dMin > 0 ? (controller.elapsedSec / (dMin * 60)).clamp(0.0, 1.0) : 0.0;
       return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
           Text('stream.telem.duration'.tr,
@@ -194,15 +293,28 @@ class StreamUrlPage extends GetView<StreamUrlController> {
   Widget _sourceForm() {
     return RkCard(
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('Sorgente stream',
-          style: const TextStyle(fontFamily: 'GeistMono', fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.text2, letterSpacing: 1.2)),
-        const SizedBox(height: 12),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+          const Text('Sorgente stream',
+            style: TextStyle(fontFamily: 'GeistMono', fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.text2, letterSpacing: 1.2)),
+          Obx(() => controller.presets.isEmpty
+              ? const SizedBox.shrink()
+              : GestureDetector(
+                  onTap: controller.presetsLoading.value ? null : () => controller.loadPresets(silent: false),
+                  child: Text(
+                    controller.presetsLoading.value ? '…' : '↻',
+                    style: const TextStyle(fontFamily: 'GeistMono', fontSize: 12, color: AppColors.text3),
+                  ),
+                )),
+        ]),
+        const SizedBox(height: 10),
+        _presetChips(),
+        const SizedBox(height: 4),
         RkFieldRow(
           label: 'stream.urlLabel'.tr,
           hint: 'stream.urlHint'.tr,
           child: Obx(() => TextField(
             controller: controller.urlCtrl,
-            enabled: !controller.isStreaming,
+            enabled: !controller.formLocked,
             keyboardType: TextInputType.url,
             inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'\s'))],
             style: const TextStyle(fontFamily: 'GeistMono', fontSize: 12),
@@ -215,10 +327,10 @@ class StreamUrlPage extends GetView<StreamUrlController> {
           hint: 'stream.titleHint'.tr,
           child: Obx(() => TextField(
             controller: controller.titleCtrl,
-            enabled: !controller.isStreaming,
+            enabled: !controller.formLocked,
             maxLength: 60,
             style: const TextStyle(fontSize: 13),
-            decoration: const InputDecoration(counterText: '', hintText: 'Es. Notte Italiana'),
+            decoration: InputDecoration(counterText: '', hintText: 'stream.titleLabel'.tr),
           )),
         ),
         const SizedBox(height: 12), const Divider(height: 1), const SizedBox(height: 12),
@@ -227,7 +339,7 @@ class StreamUrlPage extends GetView<StreamUrlController> {
           hint: 'stream.hostHint'.tr,
           child: Obx(() => TextField(
             controller: controller.hostCtrl,
-            enabled: !controller.isStreaming,
+            enabled: !controller.formLocked,
             maxLength: 40,
             style: const TextStyle(fontSize: 13),
             decoration: const InputDecoration(counterText: ''),
@@ -244,7 +356,7 @@ class StreamUrlPage extends GetView<StreamUrlController> {
             hint: hint,
             child: RkSegRadio<StartMode>(
               value: m,
-              disabled: controller.isStreaming,
+              disabled: controller.formLocked,
               onChanged: (v) => controller.startMode.value = v,
               options: [
                 RkSegOption(StartMode.now,      'stream.startModeNow'.tr),
@@ -265,7 +377,7 @@ class StreamUrlPage extends GetView<StreamUrlController> {
             hint: hint,
             child: RkSegRadio<String>(
               value: d,
-              disabled: controller.isStreaming,
+              disabled: controller.formLocked,
               onChanged: (v) => controller.duration.value = v,
               options: const [
                 RkSegOption('30',  '30m'),
@@ -283,7 +395,7 @@ class StreamUrlPage extends GetView<StreamUrlController> {
           hint: 'stream.fallbackHint'.tr,
           child: RkToggle(
             value: controller.autoFallback.value,
-            disabled: controller.isStreaming,
+            disabled: controller.formLocked,
             onChanged: (v) => controller.autoFallback.value = v,
           ),
         )),
@@ -295,7 +407,7 @@ class StreamUrlPage extends GetView<StreamUrlController> {
   Widget _routing() {
     return RkCard(
       child: Obx(() {
-        final s = controller.isStreaming;
+        final s = controller.isLive || controller.isWaiting;
         return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             Text('stream.routing.title'.tr,
@@ -323,22 +435,50 @@ class StreamUrlPage extends GetView<StreamUrlController> {
     );
   }
 
-  // ─── RECENT ──────────────────────────────────────
-  Widget _recent() {
-    return RkCard(
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('stream.recent'.tr,
-          style: const TextStyle(fontFamily: 'GeistMono', fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.text2, letterSpacing: 1.2)),
-        const SizedBox(height: 10),
-        _LaunchRow(t: '22:14', dur: '00:18:42', title: 'Drive Time',     host: 'Federico R.',     ok: true),
-        const Divider(height: 1),
-        _LaunchRow(t: 'ieri',  dur: '01:02:11', title: 'Notte Italiana', host: 'Davide Gialli',   ok: true),
-        const Divider(height: 1),
-        _LaunchRow(t: 'ieri',  dur: '00:04:09', title: 'Eventi LIVE',    host: 'evento esterno',  ok: false, warn: 'sorgente cadde · fallback'),
-        const Divider(height: 1),
-        _LaunchRow(t: 'lun',   dur: '00:42:18', title: 'Mattina RK',     host: 'Sara Bonetti',    ok: true),
-      ]),
-    );
+  Widget _presetChips() {
+    return Obx(() {
+      if (controller.presets.isEmpty) return const SizedBox.shrink();
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Wrap(
+          spacing: 6, runSpacing: 6,
+          children: controller.presets.map((p) {
+            final url = (p['url'] ?? '').toString();
+            final label = (p['label'] ?? url).toString();
+            final primary = p['primary'] == true;
+            final selected = url == controller.url.value;
+            return GestureDetector(
+              onTap: controller.formLocked ? null : () => controller.applyPreset(url),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: selected ? AppColors.accent.withOpacity(0.15) : AppColors.bg,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(
+                    color: selected ? AppColors.accent : AppColors.hairlineSoft,
+                  ),
+                ),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  if (primary) ...[
+                    const Icon(Icons.star, size: 10, color: AppColors.accent),
+                    const SizedBox(width: 4),
+                  ],
+                  Text(
+                    label.length > 28 ? '${label.substring(0, 26)}…' : label,
+                    style: TextStyle(
+                      fontFamily: 'GeistMono',
+                      fontSize: 10,
+                      fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                      color: selected ? AppColors.accent : AppColors.text2,
+                    ),
+                  ),
+                ]),
+              ),
+            );
+          }).toList(),
+        ),
+      );
+    });
   }
 
   String _shortUrl(String u) {
@@ -348,36 +488,5 @@ class StreamUrlPage extends GetView<StreamUrlController> {
     } catch (_) {
       return u.isEmpty ? '—' : u;
     }
-  }
-}
-
-class _LaunchRow extends StatelessWidget {
-  final String t, dur, title, host;
-  final bool ok;
-  final String? warn;
-  const _LaunchRow({required this.t, required this.dur, required this.title, required this.host, required this.ok, this.warn});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Row(children: [
-        SizedBox(width: 36,
-          child: Text(t, style: const TextStyle(fontFamily: 'GeistMono', fontSize: 10, color: AppColors.text3))),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(title, overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.text)),
-            const SizedBox(height: 2),
-            Text('$dur · $host${warn != null ? ' · $warn' : ''}',
-              style: const TextStyle(fontFamily: 'GeistMono', fontSize: 9, color: AppColors.text3, letterSpacing: 0.05)),
-          ]),
-        ),
-        Text(ok ? 'OK' : 'WARN',
-          style: TextStyle(fontFamily: 'GeistMono', fontSize: 9, letterSpacing: 1.0,
-            color: ok ? AppColors.autoDj : AppColors.warn)),
-      ]),
-    );
   }
 }

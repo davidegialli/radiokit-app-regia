@@ -61,4 +61,27 @@ class ApiService extends GetxService {
     final r = await _dio.post('?action=probe', data: {'url': url});
     return Map<String, dynamic>.from(r.data as Map);
   }
+
+  /// Invia un comando generico al bridge (handler in radiokit_regia_bridge.py).
+  /// Ritorna `{command_id, status:'pending'}`.
+  Future<Map<String, dynamic>> cmdSend(String type, [Map<String, dynamic>? payload]) async {
+    final r = await _dio.post('?action=cmd', data: {
+      'type': type,
+      if (payload != null) 'payload': payload,
+    });
+    return Map<String, dynamic>.from(r.data as Map);
+  }
+
+  /// Polling esito comando: usato dal pattern "conferma reale".
+  /// Risponde 404 con {ok:false, error:not_found} se l'id non esiste.
+  Future<Map<String, dynamic>> cmdResult(String commandId) async {
+    try {
+      final r = await _dio.get('?action=cmd_result&id=$commandId');
+      return Map<String, dynamic>.from(r.data as Map);
+    } on DioException catch (e) {
+      final data = e.response?.data;
+      if (data is Map) return Map<String, dynamic>.from(data);
+      rethrow;
+    }
+  }
 }

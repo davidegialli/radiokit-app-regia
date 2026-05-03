@@ -44,6 +44,32 @@ const Map<String, String> enUS = {
   'onair.queue': 'Queue',
   'onair.nowPlaying': 'Now playing',
 
+  'language.title': 'Language',
+  'language.choose': 'Choose your language',
+
+  'stream.state.unknown':   'Connecting…',
+  'stream.state.offline':   'Studio offline',
+  'stream.state.idle':      'Ready to go live',
+  'stream.state.requested': 'Request sent…',
+  'stream.state.scheduled': 'Waiting for end of track',
+  'stream.state.live':      'On air',
+  'stream.state.error':     'Source error',
+  'stream.state.offlineHint':   'Start Timer or Diretta on the studio PC',
+  'stream.state.idleHint':      'Fill the fields and tap "Go live"',
+  'stream.state.requestedHint': 'Studio is receiving the command',
+  'stream.state.scheduledHint': 'Stream starts as soon as current track ends',
+  'stream.state.liveHint':      'External stream live — metadata overridden',
+
+  'stream.now.title':    'NOW PLAYING',
+  'stream.now.empty':    'No track',
+  'stream.now.bridgeAge':'updated @sec s ago',
+  'stream.now.listeners':'@n listeners',
+  'stream.now.relayOn':  '· relay active',
+
+  'stream.toast.live':    'Broadcast started: @title',
+  'stream.toast.stopped': 'Broadcast stopped',
+  'stream.toast.failed':  'Could not start broadcast',
+
   'stream.title': 'Launch live from URL',
   'stream.subtitle': 'Point the control room to an external stream (icecast/shoutcast/HLS) and set the program title.',
   'stream.urlLabel': 'Stream URL',

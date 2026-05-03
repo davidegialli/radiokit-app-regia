@@ -50,7 +50,34 @@ const Map<String, String> itIT = {
   'onair.queue': 'Coda',
   'onair.nowPlaying': 'In riproduzione',
 
-  // Stream URL
+  // Lingua (selettore in attivazione)
+  'language.title': 'Lingua',
+  'language.choose': 'Scegli la lingua',
+
+  // Stream URL — stati app (single source of truth)
+  'stream.state.unknown':   'Connessione…',
+  'stream.state.offline':   'Studio non connesso',
+  'stream.state.idle':      'Pronto per andare in onda',
+  'stream.state.requested': 'Richiesta inviata…',
+  'stream.state.scheduled': 'In attesa fine brano',
+  'stream.state.live':      'In onda',
+  'stream.state.error':     'Errore sorgente',
+  'stream.state.offlineHint':   'Avvia Timer o Diretta sul PC studio',
+  'stream.state.idleHint':      'Compila i campi e tap "Vai in onda"',
+  'stream.state.requestedHint': 'Studio sta ricevendo il comando',
+  'stream.state.scheduledHint': 'Lo stream parte appena finisce il brano corrente',
+  'stream.state.liveHint':      'Stream esterno in onda — metadata sostituiti',
+
+  'stream.now.title':   'In onda ORA',
+  'stream.now.empty':   'Nessuna traccia',
+  'stream.now.bridgeAge': 'aggiornato @sec s fa',
+  'stream.now.listeners': '@n ascoltatori',
+  'stream.now.relayOn':  '· relay attivo',
+
+  'stream.toast.live':   'Diretta avviata: @title',
+  'stream.toast.stopped':'Diretta terminata',
+  'stream.toast.failed': 'Impossibile avviare la diretta',
+
   'stream.title': 'Lancio diretta da URL',
   'stream.subtitle': 'Punta la regia a uno stream esterno (icecast/shoutcast/HLS) e imposta il titolo del programma.',
   'stream.urlLabel': 'URL stream',

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
+import '../../core/services/storage_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/rk_button.dart';
 import '../../shared/widgets/rk_card.dart';
@@ -21,7 +22,11 @@ class ActivationPage extends GetView<ActivationController> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 60),
+              const SizedBox(height: 16),
+
+              // ── Selettore lingua (in alto, sopra l'hero) ────────────────
+              const _LanguagePicker(),
+              const SizedBox(height: 28),
 
               // ── HERO halo: cerchio rosso pulsante con icona broadcast ───
               const _HeroHalo(),
@@ -285,28 +290,112 @@ class _HeroHaloState extends State<_HeroHalo> with SingleTickerProviderStateMixi
             );
           },
         ),
-        // Disco centrale rosso
+        // Disco centrale con logo app
         Container(
           width: 96, height: 96,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            gradient: const RadialGradient(
-              center: Alignment(-0.4, -0.5),
-              radius: 1.0,
-              colors: [
-                Color(0xFFEF8474),  // accent lighter
-                Color(0xFFE6614F),  // accent
-                Color(0xFFB94639),  // accent darker
-              ],
-              stops: [0, 0.65, 1],
-            ),
+            color: AppColors.bgElev,
             boxShadow: [
               BoxShadow(color: AppColors.accent.withOpacity(0.45), blurRadius: 32),
             ],
           ),
-          child: const Icon(Icons.podcasts, size: 42, color: Colors.white),
+          clipBehavior: Clip.antiAlias,
+          child: Image.asset(
+            'assets/icons/app_icon.png',
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => const Icon(Icons.podcasts, size: 42, color: Colors.white),
+          ),
         ),
       ]),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// LanguagePicker: 4 chip orizzontali (IT EN FR ES) → Get.updateLocale +
+// persistenza locale su GetStorage. Effetto immediato su tutta la UI.
+// ─────────────────────────────────────────────────────────────────────────
+class _LanguagePicker extends StatefulWidget {
+  const _LanguagePicker();
+
+  @override
+  State<_LanguagePicker> createState() => _LanguagePickerState();
+}
+
+class _LanguagePickerState extends State<_LanguagePicker> {
+  static const _langs = [
+    ('it', 'Italiano',  Locale('it', 'IT')),
+    ('en', 'English',   Locale('en', 'US')),
+    ('fr', 'Français',  Locale('fr', 'FR')),
+    ('es', 'Español',   Locale('es', 'ES')),
+  ];
+
+  late String _selected;
+
+  @override
+  void initState() {
+    super.initState();
+    _selected = StorageService.to.locale;
+  }
+
+  void _select(String code, Locale loc) {
+    setState(() => _selected = code);
+    StorageService.to.locale = code;
+    Get.updateLocale(loc);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Text(
+          'language.choose'.tr,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontFamily: 'GeistMono',
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+            color: AppColors.text3,
+            letterSpacing: 1.2,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 8,
+          runSpacing: 8,
+          children: _langs.map((l) {
+            final code = l.$1;
+            final label = l.$2;
+            final loc = l.$3;
+            final on = code == _selected;
+            return GestureDetector(
+              onTap: () => _select(code, loc),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: on ? AppColors.accent.withOpacity(0.15) : AppColors.surface,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: on ? AppColors.accent : AppColors.hairlineSoft,
+                    width: 1,
+                  ),
+                ),
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: on ? FontWeight.w600 : FontWeight.w500,
+                    color: on ? AppColors.accent : AppColors.text2,
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
     );
   }
 }

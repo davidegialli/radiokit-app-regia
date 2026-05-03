@@ -278,7 +278,7 @@ function ScreenPush({ state, dispatch, accent }) {
           </div>
           <Btn variant="accent" size="md" style={{ width: '100%' }} onClick={() => dispatch({ type: 'push-fire' })}>
             <Icon name="bell" size={16}/>
-            Invia push “Drive Time inizia ora”
+            Invia push “Afternoon Show inizia ora”
           </Btn>
           <div className="mono" style={{ fontSize: 9, color: 'var(--text-3)', marginTop: 8, textAlign: 'center' }}>
             Trigger: cambio show · evento RadioBOSS

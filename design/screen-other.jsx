@@ -259,9 +259,9 @@ function ScreenAccount({ state, dispatch, accent }) {
               border: '1px solid var(--hairline)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontFamily: "'Geist Mono', ui-monospace, monospace", fontWeight: 700, fontSize: 18,
-            }}>SB</div>
+            }}>ML</div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 16, fontWeight: 600 }}>Sara Bonetti</div>
+              <div style={{ fontSize: 16, fontWeight: 600 }}>Marta Lenzi</div>
               <div style={{ fontSize: 11, color: 'var(--text-3)' }}>Conduttrice · Pomeriggio RK</div>
               <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
                 <Pill icon="check">REGIA FULL</Pill>

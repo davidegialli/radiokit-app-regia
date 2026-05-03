@@ -7,12 +7,12 @@ Pensata per titolari/direttori/speaker che vogliono gestire la diretta senza ess
 
 ## Stack tecnologico previsto
 
-- **Framework**: Flutter (riuso know-how Stereo 98 / Speaker mobile)
+- **Framework**: Flutter (allineato a RadioKit Speaker mobile)
 - **State management**: GetX
 - **Storage**: GetStorage (preferenze locali)
 - **Backend**: VPS RadioKit (`187.77.166.39`) — endpoint REST in `/api/`
 - **Audio (eventuale live mic)**: protocollo Diretta v2 (porta 7410-7412)
-- **Push**: OneSignal (riuso App ID Stereo 98 o nuova app dedicata)
+- **Push**: OneSignal (App ID dedicata RadioKit Regia)
 - **Auth**: sistema chiavi zero-config (stesso flow di RadioKit Diretta/Speaker) — l'utente attiva l'app con una chiave legata al suo account e ai servizi abilitati, nessuna configurazione di rete richiesta
 
 ---
@@ -61,7 +61,7 @@ Riferimento: 10 funzioni essenziali per app regia radio.
 |---|---|---|---|
 | 1 | Switch Live/AutoDJ | RadioBOSS Cloud API + Diretta v2 | Toggle: ferma AutoDJ → avvia relay mic. Fade già in SDL scheduler. |
 | 2 | Controllo Play-Out | RadioBOSS API (`getplaylist`, `nexttrack`, `playtrack`, `inserttrack`) | Lista corrente + skip + insert jingle/spot. |
-| 3 | Monitor Stream | `wp_stereo98_listeners` + RadioBOSS `/api/?action=info` + scheduler Python | Listener realtime, bitrate, status encoder, alert interruzioni. |
+| 3 | Monitor Stream | DB `radiokit` listeners + RadioBOSS `/api/?action=info` + scheduler Python | Listener realtime, bitrate, status encoder, alert interruzioni. |
 | 4 | Regia Remota (fader) | ⚠️ parziale — RadioBOSS Cloud non espone fader granulari | Volume master, mute mic, ducking on/off. Mixing fine solo via Diretta v2. |
 | 4b | **Lancio diretta da stream esterno** | RadioBOSS API (`playurl`) + DB radiokit (palinsesto live) | Inserisce un URL di streaming (icecast/shoutcast/HLS) come sorgente live, con titolo programma + conduttore. Override AutoDJ finché attivo. |
 
@@ -95,14 +95,14 @@ L'app permette di puntare la regia a quell'URL con un click + impostare titolo d
 1. Utente apre tab **Diretta** → **"Stream esterno"**
 2. Inserisce:
    - **URL stream** (icecast/shoutcast/HLS) — es. `https://mio-encoder.com:8000/live`
-   - **Titolo programma** — es. `"Notte Italiana con Davide"`
+   - **Titolo programma** — es. `"Live Show"`
    - **Conduttore** (opzionale, auto da profilo)
    - **Durata stimata** (slider 15min → 4h, o "fino a stop manuale")
 3. Tap **"Vai in onda"**
 4. Backend:
    - Verifica URL raggiungibile (HEAD request, controllo `Content-Type` audio)
    - Chiama RadioBOSS API: `playurl` con URL + metadata override
-   - Aggiorna DB `wp_stereo98_*` (palinsesto live + RDS)
+   - Aggiorna DB `radiokit` (palinsesto live + RDS)
    - Notifica push a tutti gli admin: "Diretta avviata: {titolo}"
    - Aggiorna metadata stream in tempo reale (titolo + artista=conduttore)
 5. App mostra schermata ON-AIR con:
@@ -114,7 +114,7 @@ L'app permette di puntare la regia a quell'URL con un click + impostare titolo d
 ### Backend tecnico
 
 - **RadioBOSS Cloud**: comando `playurl` accetta URL stream esterno come sorgente
-- **Override metadata**: API RDS già esiste (plugin `stereo98-rds`) — basta endpoint per override titolo+artista
+- **Override metadata**: API RDS già esistente — basta endpoint per override titolo+artista
 - **Watchdog**: scheduler Python monitora che lo stream sorgente sia vivo; se cade per >10s, fallback ad AutoDJ + push alert
 - **Auto-stop**: se durata stimata scade → torno ad AutoDJ con fade
 
@@ -205,7 +205,7 @@ Da aggiungere sotto `/api/regia/` (richiedono token JWT con ruolo direttore+):
 - Tab bottom: **Diretta** | **Playlist** | **Monitor** | **Impostazioni**
 - Pulsante "panic" per stop live in evidenza
 - Indicatore ON-AIR rosso lampeggiante quando in diretta
-- Tema Stereo 98: accent `#D61F7A`, second `#5BC4F2`
+- Tema RadioKit: accent rosso broadcast, dark-first
 
 ---
 

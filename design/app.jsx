@@ -94,10 +94,10 @@ function useAppState(listenerBase) {
           return {
             ...s,
             pushLog: [
-              { id: 'pN' + Date.now(), title: 'Drive Time inizia ora', body: 'Con Federico Ranieri', t: 'ora', sent: 4218, opens: 0, kind: 'live' },
+              { id: 'pN' + Date.now(), title: 'Afternoon Show inizia ora', body: 'Con Andrea Vella', t: 'ora', sent: 4218, opens: 0, kind: 'live' },
               ...s.pushLog,
             ],
-            pushBanner: { id: 'pN', title: 'Drive Time inizia ora', body: 'Con Federico Ranieri · RadioKit' },
+            pushBanner: { id: 'pN', title: 'Afternoon Show inizia ora', body: 'Con Andrea Vella · RadioKit' },
             toast: { kind: 'info', msg: 'Push inviata a 4.218 device' },
           };
         case 'refresh-listeners':

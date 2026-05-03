@@ -6,8 +6,8 @@
 function ScreenStream({ state, dispatch, accent }) {
   const [streaming, setStreaming] = React.useState(false);
   const [url, setUrl] = React.useState('https://encoder.miosito.com:8000/live');
-  const [title, setTitle] = React.useState('Notte Italiana');
-  const [host, setHost] = React.useState('Davide Gialli');
+  const [title, setTitle] = React.useState('');
+  const [host, setHost] = React.useState('');
   const [duration, setDuration] = React.useState('120'); // minuti, '0' = manuale
   const [startMode, setStartMode] = React.useState('endtrack'); // now | endtrack | fade
   const [autoFallback, setAutoFallback] = React.useState(true);
@@ -201,7 +201,7 @@ function ScreenStream({ state, dispatch, accent }) {
               onChange={e => setTitle(e.target.value)}
               disabled={streaming}
               maxLength={60}
-              placeholder="Es. Notte Italiana"
+              placeholder="Titolo del programma"
               style={inputStyle(true, streaming)}
             />
           </FieldRow>
@@ -289,13 +289,13 @@ function ScreenStream({ state, dispatch, accent }) {
         {/* Recent launches */}
         <Card padded>
           <div className="eyebrow-strong" style={{ marginBottom: 10 }}>Lanci recenti</div>
-          <LaunchRow t="22:14" dur="00:18:42" title="Drive Time" host="Federico R." ok/>
+          <LaunchRow t="22:14" dur="00:18:42" title="Afternoon Show" host="Andrea V." ok/>
           <div className="divider"/>
-          <LaunchRow t="ieri" dur="01:02:11" title="Notte Italiana" host="Davide Gialli" ok/>
+          <LaunchRow t="ieri" dur="01:02:11" title="Live Show" host="Marta Lenzi" ok/>
           <div className="divider"/>
           <LaunchRow t="ieri" dur="00:04:09" title="Eventi LIVE" host="evento esterno" warn="sorgente cadde · fallback"/>
           <div className="divider"/>
-          <LaunchRow t="lun" dur="00:42:18" title="Mattina RK" host="Sara Bonetti" ok/>
+          <LaunchRow t="lun" dur="00:42:18" title="Morning RK" host="Marta Lenzi" ok/>
         </Card>
 
       </div>

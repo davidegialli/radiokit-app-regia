@@ -49,12 +49,11 @@ flutter_launcher_icons:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/icons/
   # NOTA: assets/fonts vanno aggiunti dopo il primo build.
   # Scaricare Geist da https://vercel.com/font e copiare in assets/fonts/
   # poi de-commentare il blocco sotto.
-  #
-  # assets:
-  #   - assets/icons/
   # fonts:
   #   - family: Geist
   #     fonts:

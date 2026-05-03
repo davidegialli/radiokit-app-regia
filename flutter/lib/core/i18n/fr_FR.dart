@@ -44,6 +44,32 @@ const Map<String, String> frFR = {
   'onair.queue': 'File',
   'onair.nowPlaying': 'En lecture',
 
+  'language.title': 'Langue',
+  'language.choose': 'Choisissez votre langue',
+
+  'stream.state.unknown':   'Connexion…',
+  'stream.state.offline':   'Studio hors ligne',
+  'stream.state.idle':      'Prêt à passer en direct',
+  'stream.state.requested': 'Demande envoyée…',
+  'stream.state.scheduled': 'Attente fin de piste',
+  'stream.state.live':      'En direct',
+  'stream.state.error':     'Erreur source',
+  'stream.state.offlineHint':   'Lancez Timer ou Diretta sur le PC studio',
+  'stream.state.idleHint':      'Remplissez les champs et tapez "Passer en direct"',
+  'stream.state.requestedHint': 'Le studio reçoit la commande',
+  'stream.state.scheduledHint': 'Le flux démarre dès la fin de la piste',
+  'stream.state.liveHint':      'Flux externe en direct — métadonnées remplacées',
+
+  'stream.now.title':    'EN DIRECT',
+  'stream.now.empty':    'Aucune piste',
+  'stream.now.bridgeAge':'mis à jour il y a @sec s',
+  'stream.now.listeners':'@n auditeurs',
+  'stream.now.relayOn':  '· relais actif',
+
+  'stream.toast.live':    'Direct lancé : @title',
+  'stream.toast.stopped': 'Direct arrêté',
+  'stream.toast.failed':  'Impossible de lancer le direct',
+
   'stream.title': 'Lancer un direct depuis une URL',
   'stream.subtitle': "Pointez la régie vers un flux externe (icecast/shoutcast/HLS) et définissez le titre de l'émission.",
   'stream.urlLabel': 'URL du flux',

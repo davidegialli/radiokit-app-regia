@@ -44,6 +44,32 @@ const Map<String, String> esES = {
   'onair.queue': 'Cola',
   'onair.nowPlaying': 'Sonando ahora',
 
+  'language.title': 'Idioma',
+  'language.choose': 'Elige tu idioma',
+
+  'stream.state.unknown':   'Conectando…',
+  'stream.state.offline':   'Estudio sin conexión',
+  'stream.state.idle':      'Listo para salir al aire',
+  'stream.state.requested': 'Solicitud enviada…',
+  'stream.state.scheduled': 'Esperando fin de pista',
+  'stream.state.live':      'En el aire',
+  'stream.state.error':     'Error de fuente',
+  'stream.state.offlineHint':   'Inicia Timer o Diretta en el PC del estudio',
+  'stream.state.idleHint':      'Rellena los campos y pulsa "Salir en vivo"',
+  'stream.state.requestedHint': 'El estudio está recibiendo el comando',
+  'stream.state.scheduledHint': 'El stream arranca al terminar la pista actual',
+  'stream.state.liveHint':      'Stream externo en vivo — metadatos sustituidos',
+
+  'stream.now.title':    'AHORA SUENA',
+  'stream.now.empty':    'Sin pista',
+  'stream.now.bridgeAge':'actualizado hace @sec s',
+  'stream.now.listeners':'@n oyentes',
+  'stream.now.relayOn':  '· relay activo',
+
+  'stream.toast.live':    'Directo iniciado: @title',
+  'stream.toast.stopped': 'Directo terminado',
+  'stream.toast.failed':  'No se pudo iniciar el directo',
+
   'stream.title': 'Lanzar directo desde URL',
   'stream.subtitle': 'Apunta el control a un stream externo (icecast/shoutcast/HLS) y configura el título del programa.',
   'stream.urlLabel': 'URL del stream',
