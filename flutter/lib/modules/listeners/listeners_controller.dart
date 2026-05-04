@@ -28,9 +28,10 @@ class ListenersController extends GetxController {
   final loading = false.obs;
   final error = RxnString();
 
-  // Polling ogni 8s per refresh stats. Più rado di /status (4s) perche'
-  // ogni stats fa N HTTP calls verso server icecast/shoutcast.
-  static const _pollInterval = Duration(seconds: 8);
+  // Polling ogni 30s per refresh stats. Listener count cambia lentamente
+  // (sub-minute updates non utili). Riduce 6x il carico sul bridge che
+  // altrimenti accodava 2 cmd ogni 8s, congestionando la queue.
+  static const _pollInterval = Duration(seconds: 30);
   Timer? _timer;
 
   @override
@@ -59,8 +60,9 @@ class ListenersController extends GetxController {
     if (!silent) loading.value = true;
     error.value = null;
 
-    // Tenta prima listener_stats (più ricco). Se risponde con error
-    // unknown_command_type (Timer vecchio) fallback a streams_preset.
+    // listener_stats ritorna gia' tutti i campi necessari (url, label, type,
+    // primary, online, listeners, peak, bitrate, codec) — niente fallback
+    // a streams_preset (era duplicato pre-deploy nuovo bridge).
     final got = await _callCmd('monitor.listener_stats');
     if (got != null && got['streams'] is List) {
       final list = (got['streams'] as List)
@@ -71,18 +73,6 @@ class ListenersController extends GetxController {
       streams.assignAll(list);
       final tot = got['total_listeners'];
       totalListeners.value = tot is int ? tot : null;
-    } else {
-      // Fallback: solo metadata
-      final fallback = await _callCmd('monitor.streams_preset');
-      if (fallback != null && fallback['presets'] is List) {
-        final list = (fallback['presets'] as List)
-            .whereType<Map>()
-            .map((e) => Map<String, dynamic>.from(e))
-            .where((e) => (e['url'] ?? '').toString().isNotEmpty)
-            .toList();
-        streams.assignAll(list);
-        totalListeners.value = null; // niente count senza listener_stats
-      }
     }
 
     if (!silent) loading.value = false;
