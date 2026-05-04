@@ -6,6 +6,7 @@ import '../../core/theme/app_colors.dart';
 import '../../data/models/regia_status.dart';
 import '../../shared/widgets/page_header.dart';
 import '../../shared/widgets/rk_card.dart';
+import '../../shared/widgets/waveform.dart';
 import 'on_air_controller.dart';
 
 class OnAirPage extends StatelessWidget {
@@ -82,19 +83,13 @@ class _NowPlayingHero extends StatelessWidget {
               Text(np.album, maxLines: 1, overflow: TextOverflow.ellipsis,
                 style: const TextStyle(fontFamily: 'GeistMono', fontSize: 10, color: AppColors.text3)),
             ],
-            // Progress bar: posizione + durata (solo se lenMs > 0)
+            // Waveform animata + timestamp (solo se lenMs > 0)
             if (np.lenMs > 0) ...[
-              const SizedBox(height: 12),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(2),
-                child: LinearProgressIndicator(
-                  value: np.progress,
-                  minHeight: 4,
-                  backgroundColor: AppColors.surface2,
-                  valueColor: AlwaysStoppedAnimation(
-                    state == 'play' ? AppColors.accent : AppColors.text3,
-                  ),
-                ),
+              const SizedBox(height: 14),
+              Waveform(
+                progress: np.progress,
+                live: state == 'play',
+                height: 48,
               ),
               const SizedBox(height: 6),
               Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
