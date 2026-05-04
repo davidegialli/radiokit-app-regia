@@ -220,7 +220,9 @@ class StreamUrlController extends GetxController {
     if (u.isEmpty) return;
     recents.remove(u);                // sposta in cima se già presente
     recents.insert(0, u);
-    while (recents.length > _recentsMax) recents.removeLast();
+    while (recents.length > _recentsMax) {
+      recents.removeLast();
+    }
     _saveRecents();
   }
 

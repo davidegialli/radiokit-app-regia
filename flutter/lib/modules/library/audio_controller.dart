@@ -11,7 +11,6 @@ import 'package:record/record.dart';
 
 import '../../core/services/api_service.dart';
 import '../../core/services/status_service.dart';
-import '../../data/models/regia_status.dart';
 import '../../shared/widgets/rk_toast.dart';
 
 /// Tipo di audio gestito dalla tab.
