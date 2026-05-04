@@ -72,6 +72,36 @@ class ApiService extends GetxService {
     return Map<String, dynamic>.from(r.data as Map);
   }
 
+  /// Upload audio (parlato registrato o jingle file) al VPS.
+  /// `kind`: 'voice' | 'jingle'
+  /// `mode`: 'now' | 'endtrack' | 'fade'
+  /// Ritorna {file_id, command_id, size_bytes, ...}.
+  /// Il VPS automaticamente accoda `playlist.insert_audio` per il bridge.
+  Future<Map<String, dynamic>> audioUpload({
+    required String filePath,
+    required String filename,
+    required String kind,
+    required String mode,
+    bool normalize = true,
+    String? title,
+    void Function(int sent, int total)? onProgress,
+  }) async {
+    final form = FormData.fromMap({
+      'audio': await MultipartFile.fromFile(filePath, filename: filename),
+      'kind': kind,
+      'mode': mode,
+      'normalize': normalize ? '1' : '0',
+      if (title != null && title.isNotEmpty) 'title': title,
+    });
+    final r = await _dio.post(
+      '?action=audio_upload',
+      data: form,
+      options: Options(headers: {'Content-Type': 'multipart/form-data'}),
+      onSendProgress: onProgress,
+    );
+    return Map<String, dynamic>.from(r.data as Map);
+  }
+
   /// Polling esito comando: usato dal pattern "conferma reale".
   /// Risponde 404 con {ok:false, error:not_found} se l'id non esiste.
   Future<Map<String, dynamic>> cmdResult(String commandId) async {

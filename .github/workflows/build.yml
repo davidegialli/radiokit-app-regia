@@ -70,6 +70,17 @@ jobs:
               grep -nE "google|mavenCentral|gradlePluginPortal" android/settings.gradle || true
             fi
           fi
+          # Permessi Android per la feature Audio (record voce + read audio file)
+          MANIFEST=android/app/src/main/AndroidManifest.xml
+          if [ -f "$MANIFEST" ]; then
+            if ! grep -q 'android.permission.RECORD_AUDIO' "$MANIFEST"; then
+              sed -i 's#<manifest #<manifest \nxmlns:tools="http://schemas.android.com/tools" #' "$MANIFEST" 2>/dev/null || true
+              # Inietta i permessi prima del tag <application>
+              sed -i 's#<application#<uses-permission android:name="android.permission.RECORD_AUDIO"/>\n    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>\n    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/>\n    <application#' "$MANIFEST"
+              echo "--- patched RECORD_AUDIO + READ_MEDIA_AUDIO ---"
+              grep -nE "uses-permission" "$MANIFEST" || true
+            fi
+          fi
           # SDK levels coerenti con le deps moderne
           if [ -f android/app/build.gradle ]; then
             sed -i -E 's#compileSdkVersion\s+[0-9]+#compileSdkVersion 34#' android/app/build.gradle
