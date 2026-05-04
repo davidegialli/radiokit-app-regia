@@ -33,8 +33,10 @@ class StatusService extends GetxService {
   Timer? _timer;
   bool _started = false;
   // Histeresi: servono N offline consecutivi per flippare lo stato a offline.
-  // Evita flicker quando il bridge salta un singolo heartbeat (soglia VPS = 30s).
-  static const _offlineDebounce = 2;
+  // Aumentato da 2 a 3: a polling 4s sono 12s di tolleranza prima di
+  // mostrare l'allarme. Combinato con la nuova soglia VPS 60s, il flicker
+  // dovuto a heartbeat saltato e' praticamente eliminato.
+  static const _offlineDebounce = 3;
   int _consecOffline = 0;
 
   void start() {
