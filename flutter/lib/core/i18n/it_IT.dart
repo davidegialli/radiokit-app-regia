@@ -52,6 +52,7 @@ const Map<String, String> itIT = {
   'home.kpiPeak':       'PICCO',
   'home.kpiTrend':      'TREND',
   'home.kpiBridge':     'BRIDGE',
+  'home.upcoming':      'Prossime dirette',
   'home.quickGoLive':   'Vai in onda',
   'home.quickGoLiveSub':'Lancia diretta da URL stream',
   'home.dataMissing':   '— —',

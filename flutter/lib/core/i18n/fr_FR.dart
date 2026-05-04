@@ -47,6 +47,7 @@ const Map<String, String> frFR = {
   'home.kpiPeak':       'PIC',
   'home.kpiTrend':      'TENDANCE',
   'home.kpiBridge':     'BRIDGE',
+  'home.upcoming':      'Prochains directs',
   'home.quickGoLive':   'Passer en direct',
   'home.quickGoLiveSub':'Lancer un direct depuis une URL',
   'home.dataMissing':   '— —',

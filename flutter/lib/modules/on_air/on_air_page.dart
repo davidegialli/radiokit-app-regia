@@ -82,6 +82,31 @@ class _NowPlayingHero extends StatelessWidget {
               Text(np.album, maxLines: 1, overflow: TextOverflow.ellipsis,
                 style: const TextStyle(fontFamily: 'GeistMono', fontSize: 10, color: AppColors.text3)),
             ],
+            // Progress bar: posizione + durata (solo se lenMs > 0)
+            if (np.lenMs > 0) ...[
+              const SizedBox(height: 12),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(2),
+                child: LinearProgressIndicator(
+                  value: np.progress,
+                  minHeight: 4,
+                  backgroundColor: AppColors.surface2,
+                  valueColor: AlwaysStoppedAnimation(
+                    state == 'play' ? AppColors.accent : AppColors.text3,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                Text(np.fmtPos(),
+                  style: const TextStyle(fontFamily: 'GeistMono', fontSize: 10, color: AppColors.text2, fontWeight: FontWeight.w600)),
+                if (np.timeLeftSec > 0)
+                  Text('-${(np.timeLeftSec ~/ 60).toString().padLeft(2,'0')}:${(np.timeLeftSec % 60).toString().padLeft(2,'0')}',
+                    style: const TextStyle(fontFamily: 'GeistMono', fontSize: 10, color: AppColors.text3)),
+                Text(np.fmtLen(),
+                  style: const TextStyle(fontFamily: 'GeistMono', fontSize: 10, color: AppColors.text3)),
+              ]),
+            ],
           ],
           if (s.appState == RegiaAppState.offline) ...[
             const SizedBox(height: 10),

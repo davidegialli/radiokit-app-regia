@@ -47,6 +47,7 @@ const Map<String, String> enUS = {
   'home.kpiPeak':       'PEAK',
   'home.kpiTrend':      'TREND',
   'home.kpiBridge':     'BRIDGE',
+  'home.upcoming':      'Upcoming live',
   'home.quickGoLive':   'Go live',
   'home.quickGoLiveSub':'Launch live from stream URL',
   'home.dataMissing':   '— —',

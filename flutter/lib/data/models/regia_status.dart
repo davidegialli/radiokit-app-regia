@@ -23,6 +23,9 @@ class NowPlaying {
   final String album;
   final String duration;
   final String state;
+  final int posMs;
+  final int lenMs;
+  final int timeLeftSec;
 
   const NowPlaying({
     required this.title,
@@ -30,16 +33,41 @@ class NowPlaying {
     required this.album,
     required this.duration,
     required this.state,
+    this.posMs = 0,
+    this.lenMs = 0,
+    this.timeLeftSec = 0,
   });
 
   bool get isEmpty => title.isEmpty && artist.isEmpty;
 
+  /// Progress 0.0..1.0 — valido solo se lenMs > 0.
+  double get progress {
+    if (lenMs <= 0) return 0.0;
+    final p = posMs / lenMs;
+    if (p < 0) return 0.0;
+    if (p > 1) return 1.0;
+    return p;
+  }
+
+  String fmtPos() => _fmtMs(posMs);
+  String fmtLen() => _fmtMs(lenMs);
+
+  static String _fmtMs(int ms) {
+    final s = (ms ~/ 1000);
+    final m = s ~/ 60;
+    final ss = s % 60;
+    return '${m.toString().padLeft(2,'0')}:${ss.toString().padLeft(2,'0')}';
+  }
+
   factory NowPlaying.fromJson(Map<String, dynamic> j) => NowPlaying(
-    title:    (j['title']    ?? '').toString(),
-    artist:   (j['artist']   ?? '').toString(),
-    album:    (j['album']    ?? '').toString(),
-    duration: (j['duration'] ?? '').toString(),
-    state:    (j['state']    ?? '').toString(),
+    title:       (j['title']    ?? '').toString(),
+    artist:      (j['artist']   ?? '').toString(),
+    album:       (j['album']    ?? '').toString(),
+    duration:    (j['duration'] ?? '').toString(),
+    state:       (j['state']    ?? '').toString(),
+    posMs:       j['pos_ms']      is int ? j['pos_ms']      as int : 0,
+    lenMs:       j['len_ms']      is int ? j['len_ms']      as int : 0,
+    timeLeftSec: j['time_left_s'] is int ? j['time_left_s'] as int : 0,
   );
 }
 

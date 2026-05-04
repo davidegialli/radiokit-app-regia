@@ -9,6 +9,7 @@ import '../../shared/widgets/app_shell.dart' show shellTabIndex;
 import '../../shared/widgets/page_header.dart';
 import '../../shared/widgets/rk_card.dart';
 import '../../shared/widgets/rk_status_chip.dart';
+import 'sdl_events_controller.dart';
 
 /// Home / Dashboard — single-glance overview della radio.
 /// Tutti i dati vengono dal StatusService condiviso (polling /status ogni 4s).
@@ -35,6 +36,8 @@ class HomePage extends StatelessWidget {
             _NowPlayingCard(),
             SizedBox(height: 14),
             _KpiGrid(),
+            SizedBox(height: 14),
+            _UpcomingEventsCard(),
             SizedBox(height: 14),
             _QuickActions(),
           ]),
@@ -200,6 +203,77 @@ class _Kpi extends StatelessWidget {
         const SizedBox(height: 6),
         Text(value, textAlign: TextAlign.center,
           style: TextStyle(fontFamily: 'GeistMono', fontSize: 18, fontWeight: FontWeight.w600, color: valueColor ?? AppColors.text, letterSpacing: -0.1)),
+      ]),
+    );
+  }
+}
+
+// ─── Prossime dirette (da .sdl scheduler RadioBOSS) ──────────
+class _UpcomingEventsCard extends StatelessWidget {
+  const _UpcomingEventsCard();
+
+  @override
+  Widget build(BuildContext context) {
+    Get.lazyPut(() => SdlEventsController(), fenix: true);
+    return Obx(() {
+      final c = SdlEventsController.to;
+      if (c.events.isEmpty && !c.loading.value) {
+        return const SizedBox.shrink();
+      }
+      return RkCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+          Text('home.upcoming'.tr,
+            style: const TextStyle(fontFamily: 'GeistMono', fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.text2, letterSpacing: 1.2)),
+          if (c.loading.value)
+            const SizedBox(width: 10, height: 10,
+              child: CircularProgressIndicator(strokeWidth: 1.5, color: AppColors.text3)),
+        ]),
+        const SizedBox(height: 10),
+        for (var i = 0; i < c.events.length; i++) ...[
+          if (i > 0) const Divider(height: 1, color: AppColors.hairlineSoft),
+          _EventRow(event: c.events[i]),
+        ],
+      ]));
+    });
+  }
+}
+
+class _EventRow extends StatelessWidget {
+  final Map<String, dynamic> event;
+  const _EventRow({required this.event});
+
+  @override
+  Widget build(BuildContext context) {
+    final time = (event['time'] ?? '').toString();
+    final title = (event['title'] ?? '').toString();
+    final isLive = event['is_live'] == true;
+    final imm = event['imm'] == true;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 9),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+        SizedBox(width: 42,
+          child: Text(time,
+            style: const TextStyle(fontFamily: 'GeistMono', fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.accent))),
+        const SizedBox(width: 10),
+        Expanded(child: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.text))),
+        if (isLive) ...[
+          const SizedBox(width: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+            decoration: BoxDecoration(
+              color: AppColors.accent.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(3),
+            ),
+            child: const Text('LIVE',
+              style: TextStyle(fontFamily: 'GeistMono', fontSize: 8, color: AppColors.accent, fontWeight: FontWeight.w700, letterSpacing: 0.6)),
+          ),
+        ],
+        if (imm) ...[
+          const SizedBox(width: 4),
+          const Icon(Icons.flash_on, size: 11, color: AppColors.warn),
+        ],
       ]),
     );
   }
