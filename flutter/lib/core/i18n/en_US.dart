@@ -197,6 +197,7 @@ const Map<String, String> enUS = {
   'audio.err.pick_failed': 'File pick failed',
   'audio.err.too_large':   'File too large (max 10 MB)',
   'audio.err.bridge_offline': 'Studio offline — retry when bridge is online',
+  'audio.err.rec_disabled':   'Mic recording not available in this build — use "Upload file"',
 
   'library.title': 'Library',
   'push.title': 'Push notifications',

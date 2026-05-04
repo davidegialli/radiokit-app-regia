@@ -211,6 +211,7 @@ const Map<String, String> itIT = {
   'audio.err.pick_failed': 'Selezione file fallita',
   'audio.err.too_large':   'File troppo grande (max 10 MB)',
   'audio.err.bridge_offline': 'Studio non connesso — riprova quando il bridge è online',
+  'audio.err.rec_disabled':   'Registrazione mic non disponibile in questa build — usa "Carica file"',
 
   // Library
   'library.title': 'Libreria',

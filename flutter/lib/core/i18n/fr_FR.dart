@@ -197,6 +197,7 @@ const Map<String, String> frFR = {
   'audio.err.pick_failed': 'Sélection fichier échouée',
   'audio.err.too_large':   'Fichier trop volumineux (max 10 Mo)',
   'audio.err.bridge_offline': 'Studio hors ligne — réessayez quand le bridge est en ligne',
+  'audio.err.rec_disabled':   'Enregistrement mic non disponible dans cette version — utilisez "Téléverser fichier"',
 
   'library.title': 'Bibliothèque',
   'push.title': 'Notifications push',

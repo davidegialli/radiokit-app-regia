@@ -197,6 +197,7 @@ const Map<String, String> esES = {
   'audio.err.pick_failed': 'Selección de archivo fallida',
   'audio.err.too_large':   'Archivo demasiado grande (máx 10 MB)',
   'audio.err.bridge_offline': 'Estudio sin conexión — reintenta cuando el bridge esté online',
+  'audio.err.rec_disabled':   'Grabación mic no disponible en esta build — usa "Subir archivo"',
 
   'library.title': 'Biblioteca',
   'push.title': 'Notificaciones push',

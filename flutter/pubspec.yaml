@@ -32,18 +32,17 @@ dependencies:
 
   cupertino_icons: ^1.0.6
 
-  # Audio: registrazione mic + file picker + preview player + permessi
-  record: ^5.1.2
+  # Audio: file picker + preview player + permessi
+  # NB: registrazione mic temporaneamente disabilitata — il package
+  # `record` ^5.1 ha record_linux 0.7.2 incompatibile con
+  # record_platform_interface 1.3+ e rompe il build Android. Il
+  # pickFile() resta funzionante per i jingle. La registrazione
+  # parlato verra' reintrodotta con flutter_sound o quando record
+  # avra' sotto-package allineati.
   file_picker: ^8.1.4
   audioplayers: ^6.1.0
   permission_handler: ^11.3.1
   path_provider: ^2.1.4
-
-dependency_overrides:
-  # record_linux 0.7.2 e' incompatibile con record_platform_interface 1.3.x
-  # (manca startStream). Pin platform_interface a 1.2.x finche' record_linux
-  # non aggiorna. Solo Android/iOS sono comunque target build.
-  record_platform_interface: ^1.2.0
 
 dev_dependencies:
   flutter_test:

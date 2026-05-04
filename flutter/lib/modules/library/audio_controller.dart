@@ -5,9 +5,6 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:get/get.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:record/record.dart';
 
 import '../../core/services/api_service.dart';
 import '../../core/services/status_service.dart';
@@ -45,8 +42,7 @@ class AudioController extends GetxController {
   // [{filename, kind, file_id, status, sent_at, error}]
   final history = <Map<String, dynamic>>[].obs;
 
-  // Recorder + player
-  late final AudioRecorder _recorder = AudioRecorder();
+  // Player (recorder rimosso — vedi pubspec)
   final AudioPlayer _player = AudioPlayer();
   Timer? _recTimer;
 
@@ -55,84 +51,18 @@ class AudioController extends GetxController {
   @override
   void onClose() {
     _recTimer?.cancel();
-    _recorder.dispose();
     _player.dispose();
     super.onClose();
   }
 
-  // ── Registrazione mic ────────────────────────────────────────────────
+  // ── Registrazione mic — DISABILITATA temporaneamente ──────────────
+  // Il package `record` ha sotto-package linux rotto. Reintrodurre
+  // con flutter_sound o quando record_linux supporta startStream.
   Future<void> startRecording() async {
-    if (stage.value == AudioStage.recording) return;
-
-    final ok = await Permission.microphone.request();
-    if (!ok.isGranted) {
-      lastError.value = 'audio.err.mic_perm'.tr;
-      RkToast.show('audio.err.mic_perm'.tr, kind: RkToastKind.error);
-      return;
-    }
-
-    final dir = await getTemporaryDirectory();
-    final ts = DateTime.now().millisecondsSinceEpoch;
-    final path = '${dir.path}/voice_$ts.m4a';
-
-    try {
-      await _recorder.start(
-        const RecordConfig(
-          encoder: AudioEncoder.aacLc,
-          bitRate: 128000,
-          sampleRate: 44100,
-          numChannels: 1,
-        ),
-        path: path,
-      );
-      filePath.value = path;
-      fileName.value = 'voice_$ts.m4a';
-      stage.value = AudioStage.recording;
-      recordingSec.value = 0;
-      _recTimer?.cancel();
-      _recTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-        recordingSec.value++;
-        // Stop automatico a 5 minuti per evitare file enormi
-        if (recordingSec.value >= 300) stopRecording();
-      });
-    } catch (e) {
-      lastError.value = e.toString();
-      RkToast.show('audio.err.rec_failed'.tr, kind: RkToastKind.error);
-    }
+    RkToast.show('audio.err.rec_disabled'.tr, kind: RkToastKind.warning);
   }
-
-  Future<void> stopRecording() async {
-    if (stage.value != AudioStage.recording) return;
-    _recTimer?.cancel();
-    try {
-      final path = await _recorder.stop();
-      if (path != null) {
-        filePath.value = path;
-        final f = File(path);
-        if (await f.exists()) fileSize.value = await f.length();
-        stage.value = AudioStage.ready;
-      } else {
-        stage.value = AudioStage.idle;
-      }
-    } catch (e) {
-      stage.value = AudioStage.idle;
-      lastError.value = e.toString();
-    }
-  }
-
-  Future<void> cancelRecording() async {
-    _recTimer?.cancel();
-    try { await _recorder.cancel(); } catch (_) {}
-    final p = filePath.value;
-    if (p != null) {
-      try { await File(p).delete(); } catch (_) {}
-    }
-    filePath.value = null;
-    fileName.value = null;
-    fileSize.value = 0;
-    recordingSec.value = 0;
-    stage.value = AudioStage.idle;
-  }
+  Future<void> stopRecording() async {}
+  Future<void> cancelRecording() async {}
 
   // ── File picker ──────────────────────────────────────────────────────
   Future<void> pickFile() async {
