@@ -81,10 +81,10 @@ jobs:
               grep -nE "uses-permission" "$MANIFEST" || true
             fi
           fi
-          # SDK levels coerenti con le deps moderne
+          # SDK levels coerenti con le deps moderne (35 richiesto da audioplayers_android)
           if [ -f android/app/build.gradle ]; then
-            sed -i -E 's#compileSdkVersion\s+[0-9]+#compileSdkVersion 34#' android/app/build.gradle
-            sed -i -E 's#targetSdkVersion\s+[0-9]+#targetSdkVersion 34#' android/app/build.gradle
+            sed -i -E 's#compileSdkVersion\s+[0-9]+#compileSdkVersion 35#' android/app/build.gradle
+            sed -i -E 's#targetSdkVersion\s+[0-9]+#targetSdkVersion 35#' android/app/build.gradle
             sed -i -E 's#minSdkVersion\s+[a-zA-Z0-9.]+#minSdkVersion 23#' android/app/build.gradle
             # Forza tutte le kotlin-stdlib a 2.0.21 per evitare conflitti binari
             if ! grep -q "resolutionStrategy.force.*kotlin-stdlib" android/app/build.gradle; then
