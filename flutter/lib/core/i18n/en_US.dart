@@ -55,6 +55,7 @@ const Map<String, String> enUS = {
   'listeners.streamsEmpty':     'No stream configured',
   'listeners.streamsEmptyHint': 'Add URLs in the Timer Broadcast tab',
   'listeners.statsSoon':        'Per-stream stats coming soon (requires Timer update)',
+  'listeners.timerUpdate':      'Per-stream stats unavailable — please update Timer to latest version',
   'listeners.subtitle':  'Main stream (aggregate)',
   'listeners.history':   'History (last @n samples)',
   'listeners.peak':      'Session peak',

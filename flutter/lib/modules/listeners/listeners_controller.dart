@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 
@@ -19,31 +21,80 @@ import '../../core/services/status_service.dart';
 class ListenersController extends GetxController {
   static ListenersController get to => Get.find<ListenersController>();
 
-  // Lista stream output configurati: [{url, label, type, primary}]
+  // Lista stream output configurati con stats realtime:
+  // [{url, label, type, primary, online, listeners, peak, bitrate, codec, title}]
   final streams = <Map<String, dynamic>>[].obs;
+  final totalListeners = RxnInt();
   final loading = false.obs;
   final error = RxnString();
+
+  // Polling ogni 8s per refresh stats. Più rado di /status (4s) perche'
+  // ogni stats fa N HTTP calls verso server icecast/shoutcast.
+  static const _pollInterval = Duration(seconds: 8);
+  Timer? _timer;
 
   @override
   void onInit() {
     super.onInit();
     loadStreams();
+    _timer = Timer.periodic(_pollInterval, (_) => loadStreams(silent: true));
   }
 
-  Future<void> loadStreams() async {
-    if (loading.value) return;
-    loading.value = true;
-    error.value = null;
-    try {
-      // Bridge offline → niente preset disponibili
-      if (!StatusService.to.bridgeOnline) {
-        loading.value = false;
-        return;
-      }
-      final sent = await ApiService.to.cmdSend('monitor.streams_preset', const {});
-      final cid = sent['command_id']?.toString();
-      if (cid == null || cid.isEmpty) return;
+  @override
+  void onClose() {
+    _timer?.cancel();
+    super.onClose();
+  }
 
+  /// Carica la lista stream + stats realtime (count, peak, bitrate per
+  /// ogni stream). Usa il bridge handler `monitor.listener_stats`.
+  /// Fallback graceful: se l'handler non risponde (Timer non aggiornato),
+  /// usa `monitor.streams_preset` per avere almeno la lista metadata.
+  Future<void> loadStreams({bool silent = false}) async {
+    if (loading.value) return;
+    if (!StatusService.to.bridgeOnline) {
+      // Bridge offline: tieni la lista corrente, niente reset
+      return;
+    }
+    if (!silent) loading.value = true;
+    error.value = null;
+
+    // Tenta prima listener_stats (più ricco). Se risponde con error
+    // unknown_command_type (Timer vecchio) fallback a streams_preset.
+    final got = await _callCmd('monitor.listener_stats');
+    if (got != null && got['streams'] is List) {
+      final list = (got['streams'] as List)
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .where((e) => (e['url'] ?? '').toString().isNotEmpty)
+          .toList();
+      streams.assignAll(list);
+      final tot = got['total_listeners'];
+      totalListeners.value = tot is int ? tot : null;
+    } else {
+      // Fallback: solo metadata
+      final fallback = await _callCmd('monitor.streams_preset');
+      if (fallback != null && fallback['presets'] is List) {
+        final list = (fallback['presets'] as List)
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .where((e) => (e['url'] ?? '').toString().isNotEmpty)
+            .toList();
+        streams.assignAll(list);
+        totalListeners.value = null; // niente count senza listener_stats
+      }
+    }
+
+    if (!silent) loading.value = false;
+  }
+
+  /// Manda un cmd al bridge e polla cmd_result. Ritorna result se done,
+  /// null se failed/timeout/error.
+  Future<Map<String, dynamic>?> _callCmd(String type) async {
+    try {
+      final sent = await ApiService.to.cmdSend(type, const {});
+      final cid = sent['command_id']?.toString();
+      if (cid == null || cid.isEmpty) return null;
       final deadline = DateTime.now().add(const Duration(seconds: 10));
       while (DateTime.now().isBefore(deadline)) {
         await Future.delayed(const Duration(milliseconds: 800));
@@ -51,29 +102,18 @@ class ListenersController extends GetxController {
         final st = (r['status'] ?? '').toString();
         if (st == 'done') {
           final result = r['result'];
-          if (result is Map && result['presets'] is List) {
-            final list = (result['presets'] as List)
-                .whereType<Map>()
-                .map((e) => Map<String, dynamic>.from(e))
-                .where((e) => (e['url'] ?? '').toString().isNotEmpty)
-                .toList();
-            streams.assignAll(list);
-          }
-          return;
+          if (result is Map) return Map<String, dynamic>.from(result);
+          return null;
         }
-        if (st == 'failed') {
-          error.value = (r['error'] ?? '').toString();
-          return;
-        }
+        if (st == 'failed') return null;
       }
-      // timeout
-      error.value = 'timeout';
+      return null;
     } on DioException catch (e) {
       error.value = e.message;
+      return null;
     } catch (e) {
       error.value = e.toString();
-    } finally {
-      loading.value = false;
+      return null;
     }
   }
 }

@@ -55,6 +55,7 @@ const Map<String, String> esES = {
   'listeners.streamsEmpty':     'Ningún stream configurado',
   'listeners.streamsEmptyHint': 'Añade las URLs en la pestaña Transmisión del Timer',
   'listeners.statsSoon':        'Stats por-stream próximamente (requiere actualización Timer)',
+  'listeners.timerUpdate':      'Stats por-stream no disponibles — actualiza el Timer a la última versión',
   'listeners.subtitle':  'Stream principal (agregado)',
   'listeners.history':   'Histórico (últimas @n muestras)',
   'listeners.peak':      'Pico de sesión',

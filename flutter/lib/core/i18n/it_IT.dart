@@ -61,6 +61,7 @@ const Map<String, String> itIT = {
   'listeners.streamsEmpty':     'Nessuno stream configurato',
   'listeners.streamsEmptyHint': 'Aggiungi gli URL nella tab Trasmissione del Timer',
   'listeners.statsSoon':        'Stats per-stream individuali in arrivo (richiede aggiornamento Timer)',
+  'listeners.timerUpdate':      'Statistiche per-stream non disponibili — aggiorna il Timer all\'ultima versione',
   'listeners.subtitle':  'Stream principale (aggregato)',
   'listeners.history':   'Andamento (ultimi @n campioni)',
   'listeners.peak':      'Picco sessione',

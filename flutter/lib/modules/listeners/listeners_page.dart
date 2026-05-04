@@ -44,7 +44,11 @@ class _AggregateKpiCard extends StatelessWidget {
     return Obx(() {
       final s = StatusService.to.status.value;
       final svc = StatusService.to;
-      final n = s.listeners;
+      // Preferisci totale somma per-stream da listener_stats; fallback al
+      // count aggregato di /status (che e' il listener count di un singolo
+      // stream RadioBOSS, non sempre rappresentativo del totale radio)
+      final fromCmd = ListenersController.to.totalListeners.value;
+      final n = fromCmd ?? s.listeners;
       final peak = svc.listenerPeak;
       final age = s.bridgeAgeSec;
 
@@ -126,20 +130,23 @@ class _StreamsListCard extends StatelessWidget {
             ],
           ]),
         const SizedBox(height: 8),
-        // Disclaimer per-stream stats coming soon
-        Container(
-          padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
-          decoration: BoxDecoration(
-            color: AppColors.surface2.withOpacity(0.5),
-            borderRadius: BorderRadius.circular(6),
+        // Banner solo se i dati per-stream NON arrivano (Timer non ancora
+        // aggiornato col handler monitor.listener_stats)
+        if (list.isNotEmpty && !list.first.containsKey('online'))
+          Container(
+            padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+            decoration: BoxDecoration(
+              color: AppColors.warn.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: AppColors.warn.withOpacity(0.25)),
+            ),
+            child: Row(children: [
+              const Icon(Icons.update, size: 14, color: AppColors.warn),
+              const SizedBox(width: 8),
+              Expanded(child: Text('listeners.timerUpdate'.tr,
+                style: const TextStyle(fontFamily: 'GeistMono', fontSize: 9, color: AppColors.text2, height: 1.4))),
+            ]),
           ),
-          child: Row(children: [
-            const Icon(Icons.info_outline, size: 14, color: AppColors.text3),
-            const SizedBox(width: 8),
-            Expanded(child: Text('listeners.statsSoon'.tr,
-              style: const TextStyle(fontFamily: 'GeistMono', fontSize: 9, color: AppColors.text3, height: 1.4))),
-          ]),
-        ),
       ]));
     });
   }
@@ -156,26 +163,50 @@ class _StreamRow extends StatelessWidget {
     final type = (stream['type'] ?? 'auto').toString();
     final primary = stream['primary'] == true;
 
+    // Stats realtime (presenti solo dopo monitor.listener_stats — None
+    // se il Timer non ha ancora il nuovo handler)
+    final online = stream['online'] == true;
+    final hasStatsKey = stream.containsKey('online'); // distingue "stats noti" vs "metadata only"
+    final listeners = stream['listeners'];
+    final bitrate = stream['bitrate'];
+    final codec = (stream['codec'] ?? '').toString();
+
     final shortUrl = _formatUrl(url);
+
+    // Dot stato online/offline (solo se abbiamo stats)
+    Color dotColor;
+    if (!hasStatsKey)       dotColor = AppColors.text4;       // unknown
+    else if (online)        dotColor = AppColors.autoDj;      // green
+    else                    dotColor = AppColors.warn;        // red — alarm!
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
-        // Star primary
+        // Dot online + Star primary
+        Container(width: 7, height: 7,
+          decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle)),
+        const SizedBox(width: 6),
         SizedBox(
-          width: 18,
+          width: 14,
           child: primary
-              ? const Icon(Icons.star, size: 14, color: AppColors.accent)
+              ? const Icon(Icons.star, size: 12, color: AppColors.accent)
               : const SizedBox.shrink(),
         ),
         const SizedBox(width: 6),
-        // Label + URL
+        // Label + URL + bitrate
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(label, maxLines: 1, overflow: TextOverflow.ellipsis,
             style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.text)),
           const SizedBox(height: 2),
           Text(shortUrl, maxLines: 1, overflow: TextOverflow.ellipsis,
             style: const TextStyle(fontFamily: 'GeistMono', fontSize: 10, color: AppColors.text3, letterSpacing: 0.05)),
+          if (bitrate is int && bitrate > 0) ...[
+            const SizedBox(height: 2),
+            Text(
+              codec.isNotEmpty ? '$codec · ${bitrate}kbps' : '${bitrate}kbps',
+              style: const TextStyle(fontFamily: 'GeistMono', fontSize: 9, color: AppColors.text4, letterSpacing: 0.05),
+            ),
+          ],
         ])),
         const SizedBox(width: 10),
         // Type pill
@@ -189,10 +220,21 @@ class _StreamRow extends StatelessWidget {
           child: Text(type.toUpperCase(),
             style: const TextStyle(fontFamily: 'GeistMono', fontSize: 8, color: AppColors.text2, letterSpacing: 0.6, fontWeight: FontWeight.w600)),
         ),
-        const SizedBox(width: 8),
-        // Placeholder count (sarà sostituito da count realtime quando bridge supporta listener_stats)
-        const Text('—',
-          style: TextStyle(fontFamily: 'GeistMono', fontSize: 11, color: AppColors.text4)),
+        const SizedBox(width: 10),
+        // Listener count realtime (o "—" se metadata only / offline)
+        SizedBox(
+          width: 38,
+          child: Text(
+            listeners is int ? listeners.toString() : (online ? '—' : (hasStatsKey ? 'OFF' : '—')),
+            textAlign: TextAlign.right,
+            style: TextStyle(
+              fontFamily: 'GeistMono', fontSize: 13, fontWeight: FontWeight.w600,
+              color: !hasStatsKey ? AppColors.text4
+                : !online ? AppColors.warn
+                : (listeners is int && listeners > 0) ? AppColors.accent : AppColors.text2,
+            ),
+          ),
+        ),
       ]),
     );
   }

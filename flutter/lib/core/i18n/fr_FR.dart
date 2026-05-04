@@ -55,6 +55,7 @@ const Map<String, String> frFR = {
   'listeners.streamsEmpty':     'Aucun flux configuré',
   'listeners.streamsEmptyHint': 'Ajoutez les URLs dans l\'onglet Diffusion du Timer',
   'listeners.statsSoon':        'Stats par flux à venir (nécessite mise à jour Timer)',
+  'listeners.timerUpdate':      'Stats par flux non disponibles — veuillez mettre à jour le Timer',
   'listeners.subtitle':  'Flux principal (agrégé)',
   'listeners.history':   'Historique (@n derniers échantillons)',
   'listeners.peak':      'Pic de session',
