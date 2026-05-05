@@ -51,6 +51,12 @@ class StreamUrlController extends GetxController {
   static const _recentsKey = 'rkr_stream_recents';
   final recents = <String>[].obs;
 
+  // ── Signatures: URL sorgenti DJ configurate in Timer (tab "URL di
+  // Riconoscimento"). Ottenute via cmd `monitor.stream_signatures`.
+  // Lista [{url, label}].
+  final signatures = <Map<String, dynamic>>[].obs;
+  final loadingSignatures = false.obs;
+
   // ── Polling timers ─────────────────────────────────────────────────
   Timer? _statusTimer;
   RegiaAppState _lastSeenState = RegiaAppState.unknown;
@@ -102,7 +108,51 @@ class StreamUrlController extends GetxController {
     _wireText();
     _loadRecents();
     _refreshStatus();
+    loadSignatures();
     _statusTimer = Timer.periodic(const Duration(seconds: 4), (_) => _refreshStatus());
+  }
+
+  /// Carica le URL di Riconoscimento (sorgenti DJ) dal Timer.
+  /// Cmd `monitor.stream_signatures`. Best-effort: se il bridge è offline
+  /// o l'handler non esiste (Timer vecchio), la lista resta vuota.
+  Future<void> loadSignatures() async {
+    if (loadingSignatures.value) return;
+    if (!StatusService.to.bridgeOnline) return;
+    loadingSignatures.value = true;
+    try {
+      final sent = await ApiService.to.cmdSend('monitor.stream_signatures', const {});
+      final cid = sent['command_id']?.toString();
+      if (cid == null || cid.isEmpty) return;
+      final deadline = DateTime.now().add(const Duration(seconds: 10));
+      while (DateTime.now().isBefore(deadline)) {
+        await Future.delayed(const Duration(milliseconds: 800));
+        final r = await ApiService.to.cmdResult(cid);
+        final st = (r['status'] ?? '').toString();
+        if (st == 'done') {
+          final res = r['result'];
+          if (res is Map && res['signatures'] is List) {
+            signatures.assignAll((res['signatures'] as List)
+                .whereType<Map>()
+                .map((e) => Map<String, dynamic>.from(e))
+                .where((e) => (e['url'] ?? '').toString().isNotEmpty)
+                .toList());
+          }
+          return;
+        }
+        if (st == 'failed') return;
+      }
+    } catch (_) {} finally {
+      loadingSignatures.value = false;
+    }
+  }
+
+  /// Tap su una signature → riempie il form URL.
+  void applySignature(Map<String, dynamic> sig) {
+    if (formLocked) return;
+    final u = (sig['url'] ?? '').toString();
+    if (u.isEmpty) return;
+    urlCtrl.text = u;
+    url.value = u;
   }
 
   @override

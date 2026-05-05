@@ -305,6 +305,7 @@ class StreamUrlPage extends GetView<StreamUrlController> {
                 )),
         ]),
         const SizedBox(height: 10),
+        _signatureChips(),
         _recentsChips(),
         RkFieldRow(
           label: 'stream.urlLabel'.tr,
@@ -430,6 +431,53 @@ class StreamUrlPage extends GetView<StreamUrlController> {
         ]);
       }),
     );
+  }
+
+  // Signatures = URL SORGENTE configurate in Timer (tab "URL di
+  // Riconoscimento") — quelle che usano i DJ per andare in diretta.
+  // Tap su una chip → riempie il form URL.
+  Widget _signatureChips() {
+    return Obx(() {
+      final list = controller.signatures;
+      if (list.isEmpty) return const SizedBox.shrink();
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: Wrap(
+          spacing: 6, runSpacing: 6,
+          children: list.map((sig) {
+            final url = (sig['url'] ?? '').toString();
+            final label = (sig['label'] ?? url).toString();
+            final selected = url == controller.url.value;
+            final short = label.length > 28 ? '${label.substring(0, 26)}…' : label;
+            return GestureDetector(
+              onTap: controller.formLocked ? null : () => controller.applySignature(sig),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: selected ? AppColors.accent.withOpacity(0.15) : AppColors.bg,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(
+                    color: selected ? AppColors.accent : AppColors.hairlineSoft,
+                  ),
+                ),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  const Icon(Icons.podcasts, size: 11, color: AppColors.text3),
+                  const SizedBox(width: 5),
+                  Text(short,
+                    style: TextStyle(
+                      fontFamily: 'GeistMono',
+                      fontSize: 10,
+                      fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                      color: selected ? AppColors.accent : AppColors.text2,
+                    ),
+                  ),
+                ]),
+              ),
+            );
+          }).toList(),
+        ),
+      );
+    });
   }
 
   // Recents = ultimi URL SORGENTE lanciati con successo (encoder remoti,
