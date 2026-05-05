@@ -27,8 +27,6 @@ class OnAirPage extends StatelessWidget {
             _TransportCard(),
             SizedBox(height: 14),
             _VolumeCard(),
-            SizedBox(height: 14),
-            _AudioUploadPlaceholder(),
           ]),
         ),
       ),
@@ -290,38 +288,3 @@ class _VolumeCard extends StatelessWidget {
   }
 }
 
-// ─── Audio upload placeholder (coming soon) ──────────────────
-// Sostituisce il vecchio "Run Event by name" che era inutile da solo:
-// il vero feature e' upload audio dal telefono → bridge → insert in
-// RadioBOSS via playlist.insert_audio (handler bridge gia' esistente).
-class _AudioUploadPlaceholder extends StatelessWidget {
-  const _AudioUploadPlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    return RkCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text('onair.uploadTitle'.tr,
-        style: const TextStyle(fontFamily: 'GeistMono', fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.text2, letterSpacing: 1.2)),
-      const SizedBox(height: 14),
-      Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
-        Container(
-          width: 44, height: 44,
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppColors.hairlineSoft),
-          ),
-          child: const Icon(Icons.mic_none, size: 22, color: AppColors.text3),
-        ),
-        const SizedBox(width: 12),
-        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('soon.title'.tr,
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.text)),
-          const SizedBox(height: 2),
-          Text('onair.uploadDesc'.tr,
-            style: const TextStyle(fontSize: 11, color: AppColors.text3, height: 1.4)),
-        ])),
-      ]),
-    ]));
-  }
-}
