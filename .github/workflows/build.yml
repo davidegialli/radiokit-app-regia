@@ -97,6 +97,19 @@ jobs:
             fi
             echo "--- minSdkVersion patched ---"
             grep -E "minSdk" android/app/build.gradle || true
+            # Disabilita R8/proguard per evitare crash da reflection
+            # (OneSignal, flutter_sound, audioplayers usano reflection).
+            # Senza shrinking l'APK è leggermente più grande ma stabile.
+            if ! grep -q "RADIOKIT_NO_SHRINK" android/app/build.gradle; then
+              cat >> android/app/build.gradle <<'EOF'
+
+          // RADIOKIT_NO_SHRINK — disabilita R8 minification sul release
+          android.buildTypes.release {
+              minifyEnabled false
+              shrinkResources false
+          }
+          EOF
+            fi
             # Forza tutte le kotlin-stdlib a 2.0.21 per evitare conflitti binari
             if ! grep -q "resolutionStrategy.force.*kotlin-stdlib" android/app/build.gradle; then
               cat >> android/app/build.gradle <<'EOF'
@@ -200,9 +213,14 @@ jobs:
           EOF
           fi
 
-      - name: Build APK debug
+      - name: Build APK release (split-per-abi, no debug symbols)
         if: github.event_name != 'release' && !startsWith(github.ref, 'refs/tags/v')
-        run: flutter build apk --debug
+        run: |
+          # Release build = no debug symbols, R8 shrinking, ~10x più piccolo del debug.
+          # split-per-abi genera 3 APK separate (arm64, armv7, x86_64) invece di
+          # un fat APK con tutte le architetture: ~3x più piccola ciascuna.
+          # Senza keystore Flutter firma con la debug key (ok per beta interna).
+          flutter build apk --release --split-per-abi
 
       - name: Build App Bundle release
         if: github.event_name == 'release' || startsWith(github.ref, 'refs/tags/v')
@@ -362,9 +380,25 @@ jobs:
         run: |
           SSH_OPTS="-i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR"
           ssh $SSH_OPTS "$VPS_USER@$VPS_HOST" "mkdir -p $REMOTE_DIR/v${{ steps.meta.outputs.version }}"
+          # Con split-per-abi abbiamo 3 APK. arm64-v8a è quella per i device
+          # moderni (>95% utenti) → diventa il default radiokit_regia.apk.
+          # Le altre vengono caricate col loro nome ABI per fallback.
+          ARM64=$(find dist -type f -name '*arm64-v8a*.apk' | head -1)
+          if [ -n "$ARM64" ]; then
+            scp $SSH_OPTS "$ARM64" "$VPS_USER@$VPS_HOST:$REMOTE_DIR/v${{ steps.meta.outputs.version }}/radiokit_regia.apk"
+            echo "Uploaded arm64 as default: $ARM64"
+          fi
           find dist -type f \( -name '*.apk' -o -name '*.aab' -o -name '*.ipa' \) | while read f; do
             ext="${f##*.}"
-            target="radiokit_regia.${ext}"
+            base=$(basename "$f")
+            # Skip arm64 (già caricata sopra come default)
+            if echo "$base" | grep -q 'arm64-v8a'; then continue; fi
+            # Usa il nome originale per le APK split (preserva ABI)
+            if echo "$base" | grep -qE 'armeabi|x86_64'; then
+              target="$base"
+            else
+              target="radiokit_regia.${ext}"
+            fi
             scp $SSH_OPTS "$f" "$VPS_USER@$VPS_HOST:$REMOTE_DIR/v${{ steps.meta.outputs.version }}/$target"
             echo "Uploaded: $f → $target"
           done
