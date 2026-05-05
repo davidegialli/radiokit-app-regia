@@ -9,6 +9,7 @@ import '../../shared/widgets/app_shell.dart' show shellTabIndex;
 import '../../shared/widgets/page_header.dart';
 import '../../shared/widgets/rk_card.dart';
 import '../../shared/widgets/rk_status_chip.dart';
+import '../listeners/listeners_controller.dart';
 import 'sdl_events_controller.dart';
 
 /// Home / Dashboard — single-glance overview della radio.
@@ -158,7 +159,14 @@ class _KpiGrid extends StatelessWidget {
     return Obx(() {
       final s = StatusService.to.status.value;
       final svc = StatusService.to;
-      final listeners = s.listeners;
+      // Preferisci la SOMMA di tutti gli stream (Icecast/Shoutcast/HLS)
+      // se ListenersController è registrato e ha un valore valido.
+      // Fallback al numero del bridge heartbeat (singolo stream principale).
+      int? listeners = s.listeners;
+      if (Get.isRegistered<ListenersController>()) {
+        final tot = ListenersController.to.totalListeners.value;
+        if (tot != null) listeners = tot;
+      }
       final peak = svc.listenerPeak;
       final trend = svc.listenerTrend;
 
