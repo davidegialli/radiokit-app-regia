@@ -55,6 +55,11 @@ class AudioController extends GetxController {
   bool _recorderOpen = false;
   final AudioPlayer _player = AudioPlayer();
   Timer? _recTimer;
+  StreamSubscription<RecordingDisposition>? _recProgress;
+
+  // Livello audio in dB durante la registrazione (-60 = silenzio, 0 = clip)
+  // Tipicamente la voce sta tra -30 e -6 dB.
+  final recDb = (-60.0).obs;
 
   bool get hasFile => filePath.value != null;
 
@@ -80,6 +85,8 @@ class AudioController extends GetxController {
   Future<void> _ensureRecorderOpen() async {
     if (_recorderOpen) return;
     await _recorder.openRecorder();
+    // Subscription frequency = ogni quanto arrivano i sample dB (50ms = 20Hz).
+    await _recorder.setSubscriptionDuration(const Duration(milliseconds: 50));
     _recorderOpen = true;
   }
 
@@ -107,6 +114,14 @@ class AudioController extends GetxController {
         numChannels: 1,
       );
 
+      // Sottoscrivi al level meter dB
+      _recProgress?.cancel();
+      _recProgress = _recorder.onProgress?.listen((d) {
+        // d.decibels è null se il device non lo supporta
+        final db = d.decibels ?? -60.0;
+        recDb.value = db.clamp(-60.0, 0.0);
+      });
+
       filePath.value = path;
       fileName.value = 'voice_$ts.aac';
       stage.value = AudioStage.recording;
@@ -126,6 +141,9 @@ class AudioController extends GetxController {
   Future<void> stopRecording() async {
     if (stage.value != AudioStage.recording) return;
     _recTimer?.cancel();
+    _recProgress?.cancel();
+    _recProgress = null;
+    recDb.value = -60.0;
     try {
       final url = await _recorder.stopRecorder(); // url può essere il path
       final p = url ?? filePath.value;
@@ -145,6 +163,9 @@ class AudioController extends GetxController {
 
   Future<void> cancelRecording() async {
     _recTimer?.cancel();
+    _recProgress?.cancel();
+    _recProgress = null;
+    recDb.value = -60.0;
     try {
       if (_recorder.isRecording) await _recorder.stopRecorder();
     } catch (_) {}

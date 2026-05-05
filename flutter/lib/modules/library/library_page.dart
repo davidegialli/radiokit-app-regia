@@ -66,6 +66,9 @@ class _SourceCard extends StatelessWidget {
             Text(c.fmtRecTime(),
               style: const TextStyle(fontFamily: 'GeistMono', fontSize: 18, color: AppColors.text, fontWeight: FontWeight.w600)),
           ]),
+          const SizedBox(height: 12),
+          // VU meter: barra orizzontale + valore dB
+          Obx(() => _VuMeter(db: c.recDb.value)),
           const SizedBox(height: 14),
           Row(children: [
             Expanded(child: _BigBtn(
@@ -406,6 +409,57 @@ class _KindBtn extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+// ─── VU Meter: barra orizzontale 0..1 con zone verde/giallo/rosso ────
+class _VuMeter extends StatelessWidget {
+  /// dB value: -60 (silenzio) → 0 (clip)
+  final double db;
+  const _VuMeter({required this.db});
+
+  @override
+  Widget build(BuildContext context) {
+    // Mappa -60..0 dB → 0..1 lineare per la barra
+    final norm = ((db + 60) / 60).clamp(0.0, 1.0);
+    // Color zones: <-30 verde, -30..-6 verde-giallo, > -6 rosso (clip)
+    final Color barColor = db > -6
+        ? const Color(0xFFE53935)
+        : (db > -18 ? const Color(0xFFE6B800) : const Color(0xFF4CAF50));
+    final dbStr = db <= -60 ? '−∞' : '${db.toStringAsFixed(0)} dB';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Stack(children: [
+          Container(
+            height: 10,
+            decoration: BoxDecoration(
+              color: AppColors.surface2,
+              borderRadius: BorderRadius.circular(5),
+            ),
+          ),
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 60),
+            curve: Curves.easeOut,
+            height: 10,
+            width: MediaQuery.of(context).size.width * 0.78 * norm,
+            decoration: BoxDecoration(
+              color: barColor,
+              borderRadius: BorderRadius.circular(5),
+            ),
+          ),
+        ]),
+        const SizedBox(height: 4),
+        Row(children: [
+          const Text('−60', style: TextStyle(fontFamily: 'GeistMono', fontSize: 8, color: AppColors.text3)),
+          const Spacer(),
+          Text(dbStr, style: const TextStyle(
+            fontFamily: 'GeistMono', fontSize: 9, color: AppColors.text2, fontWeight: FontWeight.w600)),
+          const Spacer(),
+          const Text('0', style: TextStyle(fontFamily: 'GeistMono', fontSize: 8, color: AppColors.text3)),
+        ]),
+      ],
     );
   }
 }
