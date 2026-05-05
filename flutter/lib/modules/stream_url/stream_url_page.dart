@@ -446,9 +446,10 @@ class StreamUrlPage extends GetView<StreamUrlController> {
           spacing: 6, runSpacing: 6,
           children: list.map((sig) {
             final url = (sig['url'] ?? '').toString();
-            final label = (sig['label'] ?? url).toString();
             final selected = url == controller.url.value;
-            final short = label.length > 28 ? '${label.substring(0, 26)}…' : label;
+            // Stesso shortener delle recents: host + path, niente protocollo.
+            final shortFull = _shortUrl(url);
+            final short = shortFull.length > 28 ? '${shortFull.substring(0, 26)}…' : shortFull;
             return GestureDetector(
               onTap: controller.formLocked ? null : () => controller.applySignature(sig),
               child: Container(
