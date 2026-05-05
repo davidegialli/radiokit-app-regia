@@ -16,7 +16,7 @@ class ListenersPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Get.lazyPut(() => ListenersController(), fenix: true);
+    // Controller registrato in main.dart come permanent — niente lazyPut qui.
     return Column(children: [
       PageHeader(title: 'tab.listeners'.tr, eyebrow: 'STREAM OUTPUT'),
       Expanded(

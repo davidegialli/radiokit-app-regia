@@ -12,6 +12,7 @@ import 'core/services/status_service.dart';
 import 'core/services/storage_service.dart';
 import 'core/services/ws_service.dart';
 import 'core/theme/app_theme.dart';
+import 'modules/listeners/listeners_controller.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,6 +27,10 @@ Future<void> main() async {
   Get.put(ApiService(),     permanent: true);
   Get.put(WsService(),      permanent: true);
   Get.put(StatusService(),  permanent: true);
+  // ListenersController permanente: polla listener_stats in background
+  // (ogni 30s) cosi' i KPI ascoltatori sono freschi anche su Home/Diretta
+  // senza bisogno di aprire la tab Streaming.
+  Get.put(ListenersController(), permanent: true);
 
   runApp(const RadioKitRegiaApp());
 }
