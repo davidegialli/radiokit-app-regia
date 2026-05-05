@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
+import '../listeners/listeners_controller.dart';
+
 import '../../core/theme/app_colors.dart';
 import '../../data/models/regia_command.dart';
 import '../../data/models/regia_status.dart';
@@ -79,14 +81,24 @@ class StreamUrlPage extends GetView<StreamUrlController> {
           ],
           const SizedBox(height: 10),
           Row(children: [
-            if (s.listeners != null) ...[
-              const Icon(Icons.headphones_outlined, size: 12, color: AppColors.text3),
-              const SizedBox(width: 4),
-              Text(
-                'stream.now.listeners'.tr.replaceAll('@n', s.listeners.toString()),
-                style: const TextStyle(fontFamily: 'GeistMono', fontSize: 10, color: AppColors.text3),
-              ),
-            ],
+            // Preferisci la SOMMA di tutti gli stream da ListenersController
+            // (polled ogni 30s, sempre fresco). Fallback al singolo del bridge.
+            Builder(builder: (_) {
+              int? listeners = s.listeners;
+              if (Get.isRegistered<ListenersController>()) {
+                final tot = ListenersController.to.totalListeners.value;
+                if (tot != null) listeners = tot;
+              }
+              if (listeners == null) return const SizedBox.shrink();
+              return Row(mainAxisSize: MainAxisSize.min, children: [
+                const Icon(Icons.headphones_outlined, size: 12, color: AppColors.text3),
+                const SizedBox(width: 4),
+                Text(
+                  'stream.now.listeners'.tr.replaceAll('@n', listeners.toString()),
+                  style: const TextStyle(fontFamily: 'GeistMono', fontSize: 10, color: AppColors.text3),
+                ),
+              ]);
+            }),
             if (s.relayActive) ...[
               const SizedBox(width: 4),
               Text('stream.now.relayOn'.tr,
