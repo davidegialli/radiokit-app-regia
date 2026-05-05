@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 
 import '../../core/services/api_service.dart';
+import '../../core/services/status_service.dart';
 import '../../core/services/storage_service.dart';
 import '../../data/models/regia_command.dart';
 import '../../data/models/regia_status.dart';
