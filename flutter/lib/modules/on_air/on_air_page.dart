@@ -36,6 +36,44 @@ class OnAirPage extends StatelessWidget {
   }
 }
 
+/// Quando il bridge non riporta un brano in riproduzione (title/artist
+/// vuoti) cerchiamo di capire COSA sta facendo RadioBOSS in base ai
+/// campi disponibili: state, filename, ecc. Cosi' l'utente vede sempre
+/// qualcosa di significativo, non un generico "Nessuna traccia".
+String _describeNoTrackState(NowPlaying? np, RegiaStatus s) {
+  if (np == null) {
+    if (!s.bridgesOnline.contains('timer')) return 'Studio non connesso';
+    return 'In attesa…';
+  }
+  final state = np.state.toLowerCase();
+  final fn = np.filename.trim();
+
+  // RadioBOSS scheduler commands tipo 'getfile "..." /random.command'
+  if (fn.startsWith('getfile')) {
+    // Estraiamo il path tra virgolette per dare info sulla cartella
+    final m = RegExp(r'"([^"]+)"').firstMatch(fn);
+    final folder = m != null ? m.group(1)!.split(RegExp(r'[\\/]')).last : '';
+    return folder.isNotEmpty ? '🎲 Random pick: $folder' : '🎲 Comando RB';
+  }
+  if (fn.startsWith('generate')) return '⚙ Genera playlist';
+  if (fn.startsWith('runevent')) return '⚡ Evento scheduler';
+  if (fn.toLowerCase().startsWith(RegExp(r'https?://'))) {
+    final short = fn.length > 50 ? '${fn.substring(0, 50)}…' : fn;
+    return '📡 Stream esterno: $short';
+  }
+
+  // Stato di transizione / RB silente
+  switch (state) {
+    case 'stop':
+    case 'stopped': return '⏹ RadioBOSS fermo';
+    case 'pause':
+    case 'paused':  return '⏸ RadioBOSS in pausa';
+    case 'play':
+    case 'playing': return '▶ Transizione in corso…';
+    default:        return '⏳ In attesa…';
+  }
+}
+
 // ─── HERO Now Playing ────────────────────────────────────────
 class _NowPlayingHero extends StatelessWidget {
   const _NowPlayingHero();
@@ -70,8 +108,18 @@ class _NowPlayingHero extends StatelessWidget {
               style: TextStyle(fontFamily: 'GeistMono', fontSize: 9, fontWeight: FontWeight.w600, color: accent, letterSpacing: 1.2)),
           ]),
           const SizedBox(height: 12),
-          if (!has)
-            Text('home.noTrack'.tr, style: const TextStyle(fontSize: 16, color: AppColors.text3))
+          if (!has) ...[
+            // Anche senza title/artist mostriamo info utili dal bridge state:
+            // filename del current track (anche se e' un comando tipo getfile),
+            // playlistpos, e label generica
+            Text(_describeNoTrackState(np, s),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: AppColors.text)),
+            if (np != null && np.duration.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(np.duration,
+                style: const TextStyle(fontFamily: 'GeistMono', fontSize: 11, color: AppColors.text3)),
+            ],
+          ]
           else ...[
             Text(np.title, maxLines: 1, overflow: TextOverflow.ellipsis,
               style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w600, color: AppColors.text, letterSpacing: -0.3)),
@@ -84,23 +132,34 @@ class _NowPlayingHero extends StatelessWidget {
                 style: const TextStyle(fontFamily: 'GeistMono', fontSize: 10, color: AppColors.text3)),
             ],
             // Waveform animata + timestamp (solo se lenMs > 0)
+            // Usiamo smoothedPosMs/smoothedTimeLeftS dal service per
+            // avanzamento fluido tra un sample server e l'altro (250ms tick).
             if (np.lenMs > 0) ...[
               const SizedBox(height: 14),
-              Waveform(
-                progress: np.progress,
-                live: state == 'play',
-                height: 48,
-              ),
+              Obx(() {
+                final smoothPos = StatusService.to.smoothedPosMs.value;
+                final smoothProgress = (smoothPos / np.lenMs).clamp(0.0, 1.0);
+                return Waveform(
+                  progress: smoothProgress,
+                  live: state == 'play',
+                  height: 48,
+                );
+              }),
               const SizedBox(height: 6),
-              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                Text(np.fmtPos(),
-                  style: const TextStyle(fontFamily: 'GeistMono', fontSize: 10, color: AppColors.text2, fontWeight: FontWeight.w600)),
-                if (np.timeLeftSec > 0)
-                  Text('-${(np.timeLeftSec ~/ 60).toString().padLeft(2,'0')}:${(np.timeLeftSec % 60).toString().padLeft(2,'0')}',
+              Obx(() {
+                final smoothPos = StatusService.to.smoothedPosMs.value;
+                final smoothTL = StatusService.to.smoothedTimeLeftS.value;
+                final fmtSmoothPos = NowPlaying.fmtMs(smoothPos);
+                return Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                  Text(fmtSmoothPos,
+                    style: const TextStyle(fontFamily: 'GeistMono', fontSize: 10, color: AppColors.text2, fontWeight: FontWeight.w600)),
+                  if (smoothTL > 0)
+                    Text('-${(smoothTL ~/ 60).toString().padLeft(2,'0')}:${(smoothTL % 60).toString().padLeft(2,'0')}',
+                      style: const TextStyle(fontFamily: 'GeistMono', fontSize: 10, color: AppColors.text3)),
+                  Text(np.fmtLen(),
                     style: const TextStyle(fontFamily: 'GeistMono', fontSize: 10, color: AppColors.text3)),
-                Text(np.fmtLen(),
-                  style: const TextStyle(fontFamily: 'GeistMono', fontSize: 10, color: AppColors.text3)),
-              ]),
+                ]);
+              }),
             ],
           ],
           if (s.appState == RegiaAppState.offline) ...[

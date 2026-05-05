@@ -26,6 +26,7 @@ class NowPlaying {
   final int posMs;
   final int lenMs;
   final int timeLeftSec;
+  final String filename;
 
   const NowPlaying({
     required this.title,
@@ -36,6 +37,7 @@ class NowPlaying {
     this.posMs = 0,
     this.lenMs = 0,
     this.timeLeftSec = 0,
+    this.filename = '',
   });
 
   bool get isEmpty => title.isEmpty && artist.isEmpty;
@@ -49,10 +51,11 @@ class NowPlaying {
     return p;
   }
 
-  String fmtPos() => _fmtMs(posMs);
-  String fmtLen() => _fmtMs(lenMs);
+  String fmtPos() => fmtMs(posMs);
+  String fmtLen() => fmtMs(lenMs);
 
-  static String _fmtMs(int ms) {
+  /// Formatta ms in MM:SS. Pubblico per uso da widget (smoothedPos).
+  static String fmtMs(int ms) {
     final s = (ms ~/ 1000);
     final m = s ~/ 60;
     final ss = s % 60;
@@ -68,6 +71,7 @@ class NowPlaying {
     posMs:       j['pos_ms']      is int ? j['pos_ms']      as int : 0,
     lenMs:       j['len_ms']      is int ? j['len_ms']      as int : 0,
     timeLeftSec: j['time_left_s'] is int ? j['time_left_s'] as int : 0,
+    filename:    (j['filename'] ?? '').toString(),
   );
 }
 

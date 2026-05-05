@@ -31,6 +31,7 @@ class StatusService extends GetxService {
   final listenerHistory = <int>[].obs;
 
   Timer? _timer;
+  Timer? _smoothTimer; // tick locale ogni 250ms per smooth progress bar
   bool _started = false;
   // Histeresi: servono N offline consecutivi per flippare lo stato a offline.
   // Aumentato da 2 a 3: a polling 4s sono 12s di tolleranza prima di
@@ -39,17 +40,44 @@ class StatusService extends GetxService {
   static const _offlineDebounce = 3;
   int _consecOffline = 0;
 
+  // Smooth progress: tra un sample /status e l'altro (ogni 5s server-side,
+  // 4s client polling) interpoliamo la posizione localmente per dare
+  // l'illusione di avanzamento continuo invece di scatti.
+  int _serverPosMs = 0;
+  int _serverLenMs = 0;
+  int _serverTimeLeftS = 0;
+  DateTime? _serverPosAt;
+  bool _serverPlaying = false;
+
+  /// Posizione corrente "smoothata" — incrementa di ms reali tra un sample
+  /// e l'altro se state=='play', altrimenti resta ferma.
+  final smoothedPosMs = 0.obs;
+  final smoothedTimeLeftS = 0.obs;
+
   void start() {
     if (_started) return;
     _started = true;
     refresh();
     _timer = Timer.periodic(_pollInterval, (_) => refresh());
+    // Tick locale per interpolazione progress bar (4 fps è abbastanza fluido)
+    _smoothTimer = Timer.periodic(const Duration(milliseconds: 250), (_) => _tickSmooth());
   }
 
   void stop() {
     _timer?.cancel();
     _timer = null;
+    _smoothTimer?.cancel();
+    _smoothTimer = null;
     _started = false;
+  }
+
+  void _tickSmooth() {
+    if (!_serverPlaying || _serverPosAt == null || _serverLenMs <= 0) return;
+    final elapsed = DateTime.now().difference(_serverPosAt!).inMilliseconds;
+    final newPos = (_serverPosMs + elapsed).clamp(0, _serverLenMs);
+    smoothedPosMs.value = newPos;
+    final tlSec = ((_serverLenMs - newPos) / 1000).round();
+    smoothedTimeLeftS.value = tlSec < 0 ? 0 : tlSec;
   }
 
   Future<void> refresh() async {
@@ -80,6 +108,24 @@ class StatusService extends GetxService {
         if (_listenerHistory.length >= _historyMax) _listenerHistory.removeFirst();
         _listenerHistory.addLast(next.listeners!);
         listenerHistory.assignAll(_listenerHistory);
+      }
+
+      // Smooth progress: salva i nuovi valori dal server come baseline
+      // per l'interpolazione locale.
+      final np = next.nowPlaying;
+      if (np != null && np.lenMs > 0) {
+        _serverPosMs = np.posMs;
+        _serverLenMs = np.lenMs;
+        _serverTimeLeftS = np.timeLeftSec;
+        _serverPosAt = DateTime.now();
+        _serverPlaying = np.state.toLowerCase() == 'play';
+        smoothedPosMs.value = _serverPosMs;
+        smoothedTimeLeftS.value = _serverTimeLeftS;
+      } else {
+        // Reset se niente brano
+        _serverPlaying = false;
+        smoothedPosMs.value = 0;
+        smoothedTimeLeftS.value = 0;
       }
     } on DioException catch (e) {
       lastError.value = e.message;
