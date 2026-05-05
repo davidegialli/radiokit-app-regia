@@ -56,9 +56,11 @@ class _SourceCard extends StatelessWidget {
           style: const TextStyle(fontFamily: 'GeistMono', fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.text2, letterSpacing: 1.2)),
         const SizedBox(height: 14),
         if (stage == AudioStage.recording) ...[
-          // Recording UI
+          // Recording UI: puntino REC pulsante + cronometro.
+          // (VU meter dB rimosso: flutter_sound non riporta dB affidabili
+          //  su molti device Android, dava sempre full bar.)
           Row(children: [
-            Container(width: 12, height: 12, decoration: const BoxDecoration(color: AppColors.accent, shape: BoxShape.circle)),
+            const _RecPulse(),
             const SizedBox(width: 8),
             Text('audio.recording'.tr,
               style: const TextStyle(fontFamily: 'GeistMono', fontSize: 11, color: AppColors.accent, fontWeight: FontWeight.w600, letterSpacing: 1.2)),
@@ -66,9 +68,6 @@ class _SourceCard extends StatelessWidget {
             Text(c.fmtRecTime(),
               style: const TextStyle(fontFamily: 'GeistMono', fontSize: 18, color: AppColors.text, fontWeight: FontWeight.w600)),
           ]),
-          const SizedBox(height: 12),
-          // VU meter: barra orizzontale + valore dB
-          Obx(() => _VuMeter(db: c.recDb.value)),
           const SizedBox(height: 14),
           Row(children: [
             Expanded(child: _BigBtn(
@@ -174,25 +173,13 @@ class _SendCard extends StatelessWidget {
       }
       final uploading = c.stage.value == AudioStage.uploading;
 
+      final isVoice = c.kind.value == AudioKind.voice;
       return RkCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text('audio.send.title'.tr,
           style: const TextStyle(fontFamily: 'GeistMono', fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.text2, letterSpacing: 1.2)),
         const SizedBox(height: 14),
-        // Nome (titolo display) — opzionale, fallback al filename
-        TextField(
-          controller: c.titleCtrl,
-          enabled: !uploading,
-          textInputAction: TextInputAction.done,
-          decoration: InputDecoration(
-            labelText: 'audio.fieldTitle'.tr,
-            hintText: 'audio.fieldTitle.hint'.tr,
-            border: const OutlineInputBorder(),
-            isDense: true,
-          ),
-          style: const TextStyle(fontSize: 14),
-        ),
-        const SizedBox(height: 14),
-        // Tipo segmented
+        // Tipo: 3 categorie. Voce ha campo Nome + normalize. Jingle/Spot
+        // sono file pre-prodotti — file transfer puro.
         Row(children: [
           Expanded(child: _KindBtn(
             label: 'audio.kind.voice'.tr,
@@ -200,31 +187,64 @@ class _SendCard extends StatelessWidget {
             selected: c.kind.value == AudioKind.voice,
             onTap: uploading ? null : () => c.kind.value = AudioKind.voice,
           )),
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
           Expanded(child: _KindBtn(
             label: 'audio.kind.jingle'.tr,
             icon: Icons.music_note,
             selected: c.kind.value == AudioKind.jingle,
             onTap: uploading ? null : () => c.kind.value = AudioKind.jingle,
           )),
+          const SizedBox(width: 6),
+          Expanded(child: _KindBtn(
+            label: 'audio.kind.spot'.tr,
+            icon: Icons.campaign_outlined,
+            selected: c.kind.value == AudioKind.spot,
+            onTap: uploading ? null : () => c.kind.value = AudioKind.spot,
+          )),
         ]),
-        const SizedBox(height: 14),
-        // Normalize toggle
-        Row(children: [
-          Switch(
-            value: c.normalize.value,
-            onChanged: uploading ? null : (v) => c.normalize.value = v,
-            activeColor: AppColors.accent,
+        if (isVoice) ...[
+          const SizedBox(height: 14),
+          // Nome (titolo display) — solo per voce
+          TextField(
+            controller: c.titleCtrl,
+            enabled: !uploading,
+            textInputAction: TextInputAction.done,
+            decoration: InputDecoration(
+              labelText: 'audio.fieldTitle'.tr,
+              hintText: 'audio.fieldTitle.hint'.tr,
+              border: const OutlineInputBorder(),
+              isDense: true,
+            ),
+            style: const TextStyle(fontSize: 14),
           ),
-          const SizedBox(width: 4),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('audio.normalize'.tr,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.text)),
-            const SizedBox(height: 1),
-            Text('audio.normalize.hint'.tr,
-              style: const TextStyle(fontFamily: 'GeistMono', fontSize: 9, color: AppColors.text3, letterSpacing: 0.05)),
-          ])),
-        ]),
+          const SizedBox(height: 14),
+          // Normalize toggle — solo per voce
+          Row(children: [
+            Switch(
+              value: c.normalize.value,
+              onChanged: uploading ? null : (v) => c.normalize.value = v,
+              activeColor: AppColors.accent,
+            ),
+            const SizedBox(width: 4),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('audio.normalize'.tr,
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.text)),
+              const SizedBox(height: 1),
+              Text('audio.normalize.hint'.tr,
+                style: const TextStyle(fontFamily: 'GeistMono', fontSize: 9, color: AppColors.text3, letterSpacing: 0.05)),
+            ])),
+          ]),
+        ] else ...[
+          const SizedBox(height: 8),
+          // Hint per jingle/spot: niente modifica
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Text(
+              c.kind.value == AudioKind.spot ? 'audio.spot.hint'.tr : 'audio.jingle.hint'.tr,
+              style: const TextStyle(fontFamily: 'GeistMono', fontSize: 9, color: AppColors.text3),
+            ),
+          ),
+        ],
         const SizedBox(height: 14),
         // Send button + progress
         if (uploading)
@@ -413,53 +433,43 @@ class _KindBtn extends StatelessWidget {
   }
 }
 
-// ─── VU Meter: barra orizzontale 0..1 con zone verde/giallo/rosso ────
-class _VuMeter extends StatelessWidget {
-  /// dB value: -60 (silenzio) → 0 (clip)
-  final double db;
-  const _VuMeter({required this.db});
+// ─── REC pulsante: puntino rosso che pulsa con opacità ────
+class _RecPulse extends StatefulWidget {
+  const _RecPulse();
+  @override
+  State<_RecPulse> createState() => _RecPulseState();
+}
+
+class _RecPulseState extends State<_RecPulse>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Mappa -60..0 dB → 0..1 lineare per la barra
-    final norm = ((db + 60) / 60).clamp(0.0, 1.0);
-    // Color zones: <-30 verde, -30..-6 verde-giallo, > -6 rosso (clip)
-    final Color barColor = db > -6
-        ? const Color(0xFFE53935)
-        : (db > -18 ? const Color(0xFFE6B800) : const Color(0xFF4CAF50));
-    final dbStr = db <= -60 ? '−∞' : '${db.toStringAsFixed(0)} dB';
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Stack(children: [
-          Container(
-            height: 10,
-            decoration: BoxDecoration(
-              color: AppColors.surface2,
-              borderRadius: BorderRadius.circular(5),
-            ),
-          ),
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 60),
-            curve: Curves.easeOut,
-            height: 10,
-            width: MediaQuery.of(context).size.width * 0.78 * norm,
-            decoration: BoxDecoration(
-              color: barColor,
-              borderRadius: BorderRadius.circular(5),
-            ),
-          ),
-        ]),
-        const SizedBox(height: 4),
-        Row(children: [
-          const Text('−60', style: TextStyle(fontFamily: 'GeistMono', fontSize: 8, color: AppColors.text3)),
-          const Spacer(),
-          Text(dbStr, style: const TextStyle(
-            fontFamily: 'GeistMono', fontSize: 9, color: AppColors.text2, fontWeight: FontWeight.w600)),
-          const Spacer(),
-          const Text('0', style: TextStyle(fontFamily: 'GeistMono', fontSize: 8, color: AppColors.text3)),
-        ]),
-      ],
+    return AnimatedBuilder(
+      animation: _ctrl,
+      builder: (_, __) => Container(
+        width: 12, height: 12,
+        decoration: BoxDecoration(
+          color: AppColors.accent.withOpacity(0.3 + 0.7 * _ctrl.value),
+          shape: BoxShape.circle,
+        ),
+      ),
     );
   }
 }
