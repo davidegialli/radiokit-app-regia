@@ -305,7 +305,24 @@ class AudioController extends GetxController {
 
   String _extractErr(DioException e) {
     final d = e.response?.data;
-    if (d is Map && d['message'] != null) return d['message'].toString();
+    if (d is Map) {
+      final m = d['message'] ?? d['error'];
+      if (m != null) return m.toString();
+    }
+    // Server può rispondere con string non-JSON (es. nginx 413, php fatal):
+    // prova a estrarre json se è una stringa, altrimenti taglia a 80 char.
+    if (d is String && d.isNotEmpty) {
+      final trimmed = d.trim();
+      if (trimmed.startsWith('{')) {
+        try {
+          final parsed = trimmed; // best-effort: non parsiamo, mostriamo trimmed
+          return parsed.length > 120 ? '${parsed.substring(0, 120)}…' : parsed;
+        } catch (_) {}
+      }
+      return trimmed.length > 120 ? '${trimmed.substring(0, 120)}…' : trimmed;
+    }
+    final code = e.response?.statusCode;
+    if (code != null) return 'HTTP $code';
     return e.message ?? 'error.network'.tr;
   }
 
