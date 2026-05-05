@@ -194,11 +194,11 @@ class _TransportCard extends StatelessWidget {
       Obx(() {
         final disabled = c.sending.value.isNotEmpty || !StatusService.to.bridgeOnline;
         // Stato corrente da RadioBOSS — il bottone attivo si evidenzia.
-        // Valori RB: 'playing' | 'paused' | 'stopped' | ''
+        // RB ritorna 'play' (non 'playing'!) in alcune versioni — accettiamo entrambi.
         final s = StatusService.to.status.value.nowPlaying?.state.toLowerCase() ?? '';
-        final isPlaying = s == 'playing';
-        final isPaused  = s == 'paused';
-        final isStopped = s == 'stopped' || s.isEmpty;
+        final isPlaying = s == 'play' || s == 'playing';
+        final isPaused  = s == 'pause' || s == 'paused';
+        final isStopped = s == 'stop' || s == 'stopped' || s.isEmpty;
         return Row(children: [
           Expanded(child: _TBtn(icon: Icons.skip_previous, label: 'onair.prev'.tr,    disabled: disabled, onTap: c.prev)),
           const SizedBox(width: 8),
