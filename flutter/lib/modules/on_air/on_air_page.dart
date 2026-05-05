@@ -193,16 +193,22 @@ class _TransportCard extends StatelessWidget {
       const SizedBox(height: 14),
       Obx(() {
         final disabled = c.sending.value.isNotEmpty || !StatusService.to.bridgeOnline;
+        // Stato corrente da RadioBOSS — il bottone attivo si evidenzia.
+        // Valori RB: 'playing' | 'paused' | 'stopped' | ''
+        final s = StatusService.to.status.value.nowPlaying?.state.toLowerCase() ?? '';
+        final isPlaying = s == 'playing';
+        final isPaused  = s == 'paused';
+        final isStopped = s == 'stopped' || s.isEmpty;
         return Row(children: [
           Expanded(child: _TBtn(icon: Icons.skip_previous, label: 'onair.prev'.tr,    disabled: disabled, onTap: c.prev)),
           const SizedBox(width: 8),
-          Expanded(child: _TBtn(icon: Icons.play_arrow,    label: 'onair.play'.tr,    disabled: disabled, onTap: c.play, accent: true)),
+          Expanded(child: _TBtn(icon: Icons.play_arrow,    label: 'onair.play'.tr,    disabled: disabled, onTap: c.play,   accent: isPlaying)),
           const SizedBox(width: 8),
-          Expanded(child: _TBtn(icon: Icons.pause,         label: 'onair.pause'.tr,   disabled: disabled, onTap: c.pause)),
+          Expanded(child: _TBtn(icon: Icons.pause,         label: 'onair.pause'.tr,   disabled: disabled, onTap: c.pause,  accent: isPaused)),
           const SizedBox(width: 8),
           Expanded(child: _TBtn(icon: Icons.skip_next,     label: 'onair.skipNext'.tr,disabled: disabled, onTap: c.skip)),
           const SizedBox(width: 8),
-          Expanded(child: _TBtn(icon: Icons.stop,          label: 'onair.stop'.tr,    disabled: disabled, onTap: c.stop, danger: true)),
+          Expanded(child: _TBtn(icon: Icons.stop,          label: 'onair.stop'.tr,    disabled: disabled, onTap: c.stop,   danger: isStopped)),
         ]);
       }),
     ]));
