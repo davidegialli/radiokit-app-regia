@@ -182,7 +182,9 @@ class StreamUrlController extends GetxController {
     status.value = next;
     _lastSeenState = next.appState;
 
-    // Toast "Diretta avviata" UNA VOLTA SOLA quando si entra in live
+    // Toast "Diretta avviata" UNA VOLTA SOLA quando si entra in live.
+    // Inoltre resetta il form (il lancio e' confermato, l'utente puo'
+    // preparare la prossima diretta).
     if (next.appState == RegiaAppState.live && prev != RegiaAppState.live && !_liveToastShown) {
       _liveToastShown = true;
       final t = sessionTitle ?? title.value;
@@ -190,11 +192,22 @@ class StreamUrlController extends GetxController {
         'stream.toast.live'.tr.replaceAll('@title', t),
         kind: RkToastKind.success,
       );
+      _resetFormAfterLaunch();
     }
     // Reset toast flag quando si esce dalla diretta
     if (next.appState == RegiaAppState.idle && prev != RegiaAppState.idle) {
       _liveToastShown = false;
     }
+  }
+
+  /// Pulisce i campi form dopo conferma di lancio andato a buon fine.
+  /// Lascia URL (di solito si rilancia lo stesso) ma azzera title + host
+  /// che cambiano per ogni nuova diretta.
+  void _resetFormAfterLaunch() {
+    titleCtrl.clear();
+    title.value = '';
+    hostCtrl.clear();
+    host.value = '';
   }
 
   // ── Azione: Vai in onda ────────────────────────────────────────────
