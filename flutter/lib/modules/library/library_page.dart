@@ -175,6 +175,20 @@ class _SendCard extends StatelessWidget {
         Text('audio.send.title'.tr,
           style: const TextStyle(fontFamily: 'GeistMono', fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.text2, letterSpacing: 1.2)),
         const SizedBox(height: 14),
+        // Nome (titolo display) — opzionale, fallback al filename
+        TextField(
+          controller: c.titleCtrl,
+          enabled: !uploading,
+          textInputAction: TextInputAction.done,
+          decoration: InputDecoration(
+            labelText: 'audio.fieldTitle'.tr,
+            hintText: 'audio.fieldTitle.hint'.tr,
+            border: const OutlineInputBorder(),
+            isDense: true,
+          ),
+          style: const TextStyle(fontSize: 14),
+        ),
+        const SizedBox(height: 14),
         // Tipo segmented
         Row(children: [
           Expanded(child: _KindBtn(

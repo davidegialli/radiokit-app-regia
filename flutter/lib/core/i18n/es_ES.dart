@@ -180,6 +180,8 @@ const Map<String, String> esES = {
   'audio.stop':          'Stop',
   'audio.discard':       '✕ Descartar',
   'audio.send.title':    'Enviar al estudio',
+  'audio.fieldTitle':       'Nombre',
+  'audio.fieldTitle.hint':  'Ej. Jingle apertura, Voz invitado…',
   'audio.send.btn':      'Emitir tras esta pista',
   'audio.kind.voice':    'Voz',
   'audio.kind.jingle':   'Jingle',

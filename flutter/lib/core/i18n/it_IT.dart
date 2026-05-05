@@ -194,6 +194,8 @@ const Map<String, String> itIT = {
   'audio.stop':          'Stop',
   'audio.discard':       '✕ Scarta',
   'audio.send.title':    'Invia in regia',
+  'audio.fieldTitle':       'Nome',
+  'audio.fieldTitle.hint':  'Es. Sigla apertura, Voce ospite…',
   'audio.send.btn':      'Manda dopo questo brano',
   'audio.kind.voice':    'Parlato',
   'audio.kind.jingle':   'Jingle',

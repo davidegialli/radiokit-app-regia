@@ -180,6 +180,8 @@ const Map<String, String> frFR = {
   'audio.stop':          'Stop',
   'audio.discard':       '✕ Annuler',
   'audio.send.title':    'Envoyer en régie',
+  'audio.fieldTitle':       'Nom',
+  'audio.fieldTitle.hint':  'Ex. Jingle ouverture, Voix invité…',
   'audio.send.btn':      'Diffuser après cette piste',
   'audio.kind.voice':    'Voix',
   'audio.kind.jingle':   'Jingle',

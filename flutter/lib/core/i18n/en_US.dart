@@ -180,6 +180,8 @@ const Map<String, String> enUS = {
   'audio.stop':          'Stop',
   'audio.discard':       '✕ Discard',
   'audio.send.title':    'Send to studio',
+  'audio.fieldTitle':       'Name',
+  'audio.fieldTitle.hint':  'E.g. Opening jingle, Guest voice…',
   'audio.send.btn':      'Air after this track',
   'audio.kind.voice':    'Voice',
   'audio.kind.jingle':   'Jingle',

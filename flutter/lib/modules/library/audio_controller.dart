@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:get/get.dart';
 import 'package:path_provider/path_provider.dart';
@@ -38,6 +39,10 @@ class AudioController extends GetxController {
   final fileName = RxnString();
   final fileSize = 0.obs;
 
+  // Title (display name dato dall'utente — opzionale, fallback a fileName)
+  final titleCtrl = TextEditingController();
+  final title = ''.obs;
+
   // Settings
   final normalize = true.obs;
 
@@ -54,8 +59,15 @@ class AudioController extends GetxController {
   bool get hasFile => filePath.value != null;
 
   @override
+  void onInit() {
+    super.onInit();
+    titleCtrl.addListener(() => title.value = titleCtrl.text);
+  }
+
+  @override
   void onClose() {
     _recTimer?.cancel();
+    titleCtrl.dispose();
     _player.dispose();
     if (_recorderOpen) {
       _recorder.closeRecorder();
@@ -206,10 +218,14 @@ class AudioController extends GetxController {
     uploadProgress.value = 0;
     stage.value = AudioStage.idle;
     lastError.value = null;
+    titleCtrl.clear();
+    title.value = '';
   }
 
   // ── Send → upload VPS ────────────────────────────────────────────────
-  Future<void> send({String? title}) async {
+  /// Se [titleOverride] è null, usa `title.value` (textfield UI).
+  Future<void> send({String? titleOverride}) async {
+    final effectiveTitle = (titleOverride ?? title.value).trim();
     final p = filePath.value;
     final n = fileName.value;
     if (p == null || n == null) return;
@@ -227,6 +243,7 @@ class AudioController extends GetxController {
     final kindStr = kind.value == AudioKind.voice ? 'voice' : 'jingle';
     final entry = <String, dynamic>{
       'filename': n,
+      'title': effectiveTitle.isEmpty ? null : effectiveTitle,
       'kind': kindStr,
       'sent_at': DateTime.now().toIso8601String(),
       'status': 'uploading',
@@ -240,7 +257,7 @@ class AudioController extends GetxController {
         kind: kindStr,
         mode: 'endtrack',
         normalize: normalize.value,
-        title: title,
+        title: effectiveTitle.isEmpty ? null : effectiveTitle,
         onProgress: (sent, total) {
           if (total > 0) uploadProgress.value = sent / total;
         },
