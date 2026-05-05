@@ -85,7 +85,18 @@ jobs:
           if [ -f android/app/build.gradle ]; then
             sed -i -E 's#compileSdkVersion\s+[0-9]+#compileSdkVersion 35#' android/app/build.gradle
             sed -i -E 's#targetSdkVersion\s+[0-9]+#targetSdkVersion 35#' android/app/build.gradle
-            sed -i -E 's#minSdkVersion\s+[a-zA-Z0-9.]+#minSdkVersion 24#' android/app/build.gradle
+            # Bump minSdkVersion a 24 (richiesto da flutter_sound).
+            # Template Flutter usa varie sintassi: "minSdkVersion N", "minSdk N",
+            # "minSdkVersion flutter.minSdkVersion". Sed multi-pattern:
+            sed -i -E 's#minSdkVersion[ =]+[a-zA-Z0-9.]+#minSdkVersion 24#g' android/app/build.gradle
+            sed -i -E 's#minSdk[ =]+[a-zA-Z0-9.]+#minSdk 24#g' android/app/build.gradle
+            # Se non c'e' alcun minSdk* esplicito (legge da local.properties),
+            # iniettiamo un override dentro android.defaultConfig:
+            if ! grep -qE "minSdk(Version)?\s*[ =]+\s*24" android/app/build.gradle; then
+              sed -i -E '0,/defaultConfig\s*\{/{s##defaultConfig {\n        minSdkVersion 24#}' android/app/build.gradle
+            fi
+            echo "--- minSdkVersion patched ---"
+            grep -E "minSdk" android/app/build.gradle || true
             # Forza tutte le kotlin-stdlib a 2.0.21 per evitare conflitti binari
             if ! grep -q "resolutionStrategy.force.*kotlin-stdlib" android/app/build.gradle; then
               cat >> android/app/build.gradle <<'EOF'
