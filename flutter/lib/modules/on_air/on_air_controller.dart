@@ -24,12 +24,42 @@ class OnAirController extends GetxController {
     super.onClose();
   }
 
+  /// Manda comando + polla cmd_result finché 'done'/'failed' o timeout 8s.
+  /// Il bottone resta in "in attesa…" fino al riscontro reale del bridge,
+  /// non solo all'enqueue. Cosi' l'utente sa quando il comando e' davvero
+  /// eseguito da RadioBOSS.
   Future<void> _send(String type, String label, [Map<String, dynamic>? payload]) async {
     if (sending.value.isNotEmpty) return;
     sending.value = label;
     try {
-      await ApiService.to.cmdSend(type, payload);
-      RkToast.show('onair.toast.ack'.tr.replaceAll('@action', label).replaceAll('{action}', label));
+      final sent = await ApiService.to.cmdSend(type, payload);
+      final cid = sent['command_id']?.toString();
+      if (cid == null || cid.isEmpty) {
+        // Niente command_id: ack immediato (legacy)
+        RkToast.show('onair.toast.ack'.tr.replaceAll('@action', label).replaceAll('{action}', label));
+        return;
+      }
+      // Polling esito: bridge picka ~ogni 1-3s + esegue + ack.
+      // Timeout 8s e' sufficiente per la stragrande maggioranza dei comandi RB.
+      final deadline = DateTime.now().add(const Duration(seconds: 8));
+      while (DateTime.now().isBefore(deadline)) {
+        await Future.delayed(const Duration(milliseconds: 600));
+        final r = await ApiService.to.cmdResult(cid);
+        final st = (r['status'] ?? '').toString();
+        if (st == 'done') {
+          RkToast.show('onair.toast.ack'.tr.replaceAll('@action', label).replaceAll('{action}', label));
+          return;
+        }
+        if (st == 'failed') {
+          final err = (r['error'] ?? '').toString();
+          RkToast.show(
+            err.isEmpty ? 'onair.toast.fail'.tr : err,
+            kind: RkToastKind.error);
+          return;
+        }
+      }
+      // Timeout senza risposta del bridge
+      RkToast.show('onair.toast.fail'.tr, kind: RkToastKind.error);
     } on DioException {
       RkToast.show('onair.toast.fail'.tr, kind: RkToastKind.error);
     } catch (_) {
