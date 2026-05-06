@@ -35,8 +35,45 @@ Future<void> main() async {
   runApp(const RadioKitRegiaApp());
 }
 
-class RadioKitRegiaApp extends StatelessWidget {
+class RadioKitRegiaApp extends StatefulWidget {
   const RadioKitRegiaApp({super.key});
+
+  @override
+  State<RadioKitRegiaApp> createState() => _RadioKitRegiaAppState();
+}
+
+class _RadioKitRegiaAppState extends State<RadioKitRegiaApp>
+    with WidgetsBindingObserver {
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // Quando l'app torna in foreground (utente riapre dopo standby/lockscreen)
+    // forziamo refresh immediato dei dati piu' importanti — invece di
+    // aspettare il prossimo tick di polling che potrebbe essere fra 14s.
+    if (state == AppLifecycleState.resumed) {
+      try {
+        StatusService.to.refresh();
+      } catch (_) {}
+      try {
+        if (Get.isRegistered<ListenersController>()) {
+          ListenersController.to.loadStreams(silent: true);
+        }
+      } catch (_) {}
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -28,10 +28,9 @@ class ListenersController extends GetxController {
   final loading = false.obs;
   final error = RxnString();
 
-  // Polling ogni 30s per refresh stats. Listener count cambia lentamente
-  // (sub-minute updates non utili). Riduce 6x il carico sul bridge che
-  // altrimenti accodava 2 cmd ogni 8s, congestionando la queue.
-  static const _pollInterval = Duration(seconds: 30);
+  // Polling ogni 15s per refresh stats. UX percepita fresca senza
+  // saturare il bridge (4 stream * 1 cmd / 15s = OK).
+  static const _pollInterval = Duration(seconds: 15);
   Timer? _timer;
 
   @override

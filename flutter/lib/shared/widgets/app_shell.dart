@@ -7,7 +7,9 @@ import '../../modules/on_air/on_air_page.dart';
 import '../../modules/stream_url/stream_url_page.dart';
 import '../../modules/stream_url/stream_url_binding.dart';
 import '../../modules/listeners/listeners_page.dart';
+import '../../modules/listeners/listeners_controller.dart';
 import '../../modules/library/library_page.dart';
+import '../../core/services/status_service.dart';
 
 /// Indice tab corrente, esposto in modo che altre pagine (es. Home con
 /// shortcut "Vai in onda") possano cambiare tab senza un secondo navigator.
@@ -44,7 +46,13 @@ class _AppShellState extends State<AppShell> {
       body: SafeArea(child: _pages[shellTabIndex.value]),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: shellTabIndex.value,
-        onTap: (v) => shellTabIndex.value = v,
+        onTap: (v) {
+          shellTabIndex.value = v;
+          // Force-refresh dei dati piu' rilevanti per la tab che si apre,
+          // cosi' i KPI sono freschi all'apertura senza aspettare il
+          // prossimo tick di polling.
+          _refreshOnTabOpen(v);
+        },
         backgroundColor: AppColors.bgElev,
         selectedItemColor: AppColors.accent,
         unselectedItemColor: AppColors.text3,
@@ -60,5 +68,23 @@ class _AppShellState extends State<AppShell> {
         ],
       ),
     ));
+  }
+
+  /// Force-refresh dei dati pertinenti quando l'utente cambia tab.
+  /// Best-effort: niente await/blocking, gli errori vengono ignorati
+  /// (il polling normale recupera al prossimo tick).
+  void _refreshOnTabOpen(int tabIndex) {
+    // 0=Home, 1=OnAir, 2=Stream, 3=Listeners, 4=Library
+    // Tutti tranne Library mostrano dati live → refresh status + listeners.
+    if (tabIndex == 4) return;
+    try { StatusService.to.refresh(); } catch (_) {}
+    if (tabIndex == 0 || tabIndex == 2 || tabIndex == 3) {
+      // Home / Diretta / Streaming hanno KPI ascoltatori
+      try {
+        if (Get.isRegistered<ListenersController>()) {
+          ListenersController.to.loadStreams(silent: true);
+        }
+      } catch (_) {}
+    }
   }
 }
