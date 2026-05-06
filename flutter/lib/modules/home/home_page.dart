@@ -168,15 +168,8 @@ class _KpiGrid extends StatelessWidget {
         if (tot != null) listeners = tot;
       }
       final peak = svc.listenerPeak;
-      final trend = svc.listenerTrend;
-
-      String trendStr = 'home.dataMissing'.tr;
-      Color trendColor = AppColors.text3;
-      if (trend != null) {
-        if (trend > 0)      { trendStr = '↑'; trendColor = AppColors.autoDj; }
-        else if (trend < 0) { trendStr = '↓'; trendColor = AppColors.warn; }
-        else                { trendStr = '→'; trendColor = AppColors.text2; }
-      }
+      // trendStr/trendColor placeholder rimossi: il KPI ora mostra
+      // 'Prossimamente' finché non avremo lo storico DB.
 
       // Niente KPI Bridge: alarm-only banner gestisce il caso problematico.
       // Il KPI Trend e' "prossimamente" — diventera' il trend ascolti

@@ -175,9 +175,13 @@ class _StreamRow extends StatelessWidget {
 
     // Dot stato online/offline (solo se abbiamo stats)
     Color dotColor;
-    if (!hasStatsKey)       dotColor = AppColors.text4;       // unknown
-    else if (online)        dotColor = AppColors.autoDj;      // green
-    else                    dotColor = AppColors.warn;        // red — alarm!
+    if (!hasStatsKey) {
+      dotColor = AppColors.text4;       // unknown
+    } else if (online) {
+      dotColor = AppColors.autoDj;      // green
+    } else {
+      dotColor = AppColors.warn;        // red — alarm!
+    }
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
