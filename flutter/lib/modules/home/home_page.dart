@@ -179,12 +179,18 @@ class _KpiGrid extends StatelessWidget {
       }
 
       // Niente KPI Bridge: alarm-only banner gestisce il caso problematico.
+      // Il KPI Trend e' "prossimamente" — diventera' il trend ascolti
+      // quando avremo lo storico in DB (snapshot per-radio ogni X sec).
       return Row(children: [
         Expanded(child: _Kpi(label: 'home.kpiListeners'.tr, value: listeners?.toString() ?? '—')),
         const SizedBox(width: 8),
         Expanded(child: _Kpi(label: 'home.kpiPeak'.tr,      value: peak?.toString() ?? '—')),
         const SizedBox(width: 8),
-        Expanded(child: _Kpi(label: 'home.kpiTrend'.tr,     value: trendStr, valueColor: trendColor)),
+        Expanded(child: _Kpi(
+          label: 'home.kpiTrend'.tr,
+          value: 'home.soon'.tr,
+          valueColor: AppColors.text3,
+        )),
       ]);
     });
   }

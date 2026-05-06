@@ -27,6 +27,8 @@ class OnAirPage extends StatelessWidget {
             _TransportCard(),
             SizedBox(height: 14),
             _VolumeCard(),
+            SizedBox(height: 14),
+            _QueueCard(),
           ]),
         ),
       ),
@@ -288,3 +290,105 @@ class _VolumeCard extends StatelessWidget {
   }
 }
 
+
+// ─── Coda playlist (next 10) con drag & drop reorder ──────────
+class _QueueCard extends StatelessWidget {
+  const _QueueCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = OnAirController.to;
+    return RkCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+        Text('onair.queue.title'.tr,
+          style: const TextStyle(fontFamily: 'GeistMono', fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.text2, letterSpacing: 1.2)),
+        Obx(() => GestureDetector(
+          onTap: c.queueLoading.value ? null : c.loadQueue,
+          child: Text(c.queueLoading.value ? '…' : '↻',
+            style: const TextStyle(fontFamily: 'GeistMono', fontSize: 12, color: AppColors.text3)),
+        )),
+      ]),
+      const SizedBox(height: 10),
+      Obx(() {
+        final list = c.queue;
+        if (list.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 18),
+            child: Center(child: Text(
+              c.queueLoading.value ? 'common.loading'.tr : 'onair.queue.empty'.tr,
+              style: const TextStyle(fontSize: 12, color: AppColors.text3))),
+          );
+        }
+        return ReorderableListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          buildDefaultDragHandles: false,
+          itemCount: list.length,
+          onReorder: (oldIdx, newIdx) {
+            // Flutter passa newIdx come "indice di destinazione AFTER move".
+            // Se ti sposti più in basso, devi -1 perché la lista cambia.
+            if (newIdx > oldIdx) newIdx -= 1;
+            c.moveTrack(oldIdx, newIdx);
+          },
+          itemBuilder: (ctx, i) {
+            final t = list[i];
+            return _QueueRow(
+              key: ValueKey('queue-${t['pos']}-$i'),
+              index: i,
+              track: t,
+            );
+          },
+        );
+      }),
+      const SizedBox(height: 4),
+      Text('onair.queue.hint'.tr,
+        style: const TextStyle(fontFamily: 'GeistMono', fontSize: 9, color: AppColors.text3)),
+    ]));
+  }
+}
+
+class _QueueRow extends StatelessWidget {
+  final int index;
+  final Map<String, dynamic> track;
+  const _QueueRow({super.key, required this.index, required this.track});
+
+  @override
+  Widget build(BuildContext context) {
+    final title  = (track['title']  ?? '').toString();
+    final artist = (track['artist'] ?? '').toString();
+    final dur    = (track['duration'] ?? '').toString();
+    final isUrl  = track['is_url'] == true;
+    final fn     = (track['filename'] ?? '').toString();
+    // Display: se title vuoto, usa basename del filename
+    final display = title.isNotEmpty
+        ? (artist.isNotEmpty ? '$artist — $title' : title)
+        : (fn.split(RegExp(r'[\/]')).last);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+        SizedBox(width: 22, child: Text('${index + 1}',
+          style: const TextStyle(fontFamily: 'GeistMono', fontSize: 11, color: AppColors.text3, fontWeight: FontWeight.w600))),
+        const SizedBox(width: 6),
+        if (isUrl)
+          const Icon(Icons.podcasts, size: 12, color: AppColors.accent)
+        else
+          const Icon(Icons.music_note, size: 12, color: AppColors.text3),
+        const SizedBox(width: 8),
+        Expanded(child: Text(display, maxLines: 1, overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontSize: 12, color: AppColors.text))),
+        if (dur.isNotEmpty) ...[
+          const SizedBox(width: 6),
+          Text(dur, style: const TextStyle(fontFamily: 'GeistMono', fontSize: 9, color: AppColors.text3)),
+        ],
+        const SizedBox(width: 4),
+        ReorderableDragStartListener(
+          index: index,
+          child: const Padding(
+            padding: EdgeInsets.all(4),
+            child: Icon(Icons.drag_handle, size: 16, color: AppColors.text3),
+          ),
+        ),
+      ]),
+    );
+  }
+}

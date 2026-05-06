@@ -16,12 +16,82 @@ class OnAirController extends GetxController {
   final volume = 80.obs;
   final sending = ''.obs; // nome dell'azione in invio (per disabilitare i bottoni)
 
+  // Coda playlist: prossime N tracce parsate da playlist.next_tracks
+  // Ogni item: {pos, title, artist, filename, duration, is_url}
+  final queue = <Map<String, dynamic>>[].obs;
+  final queueLoading = false.obs;
+
   Timer? _volumeDebounce;
+  Timer? _queueTimer;
+
+  @override
+  void onInit() {
+    super.onInit();
+    loadQueue();
+    _queueTimer = Timer.periodic(
+      const Duration(seconds: 20),
+      (_) => loadQueue(silent: true),
+    );
+  }
 
   @override
   void onClose() {
     _volumeDebounce?.cancel();
+    _queueTimer?.cancel();
     super.onClose();
+  }
+
+  /// Carica le prossime 10 tracce in playlist da RB via bridge.
+  Future<void> loadQueue({bool silent = false}) async {
+    if (queueLoading.value) return;
+    if (!silent) queueLoading.value = true;
+    try {
+      final sent = await ApiService.to.cmdSend(
+          'playlist.next_tracks', {'cnt': 10});
+      final cid = sent['command_id']?.toString();
+      if (cid == null || cid.isEmpty) return;
+      final deadline = DateTime.now().add(const Duration(seconds: 6));
+      while (DateTime.now().isBefore(deadline)) {
+        await Future.delayed(const Duration(milliseconds: 500));
+        final r = await ApiService.to.cmdResult(cid);
+        final st = (r['status'] ?? '').toString();
+        if (st == 'done') {
+          final res = r['result'];
+          if (res is Map && res['tracks'] is List) {
+            queue.assignAll((res['tracks'] as List)
+                .whereType<Map>()
+                .map((e) => Map<String, dynamic>.from(e))
+                .toList());
+          }
+          return;
+        }
+        if (st == 'failed') return;
+      }
+    } catch (_) {} finally {
+      if (!silent) queueLoading.value = false;
+    }
+  }
+
+  /// Sposta una traccia dalla pos `from` alla pos `to`.
+  /// L'utente trascina visivamente nella ReorderableListView, noi
+  /// applichiamo subito sul bridge e ricarichiamo per conferma.
+  Future<void> moveTrack(int from, int to) async {
+    if (from == to) return;
+    // Optimistic UI: riordino subito la lista locale
+    if (from >= 0 && from < queue.length) {
+      final item = queue.removeAt(from);
+      final clampedTo = to.clamp(0, queue.length);
+      queue.insert(clampedTo, item);
+    }
+    try {
+      // RB usa pos 1-based: il pos del nostro item e' gia' 1-based (PT).
+      await ApiService.to.cmdSend('playlist.move', {
+        'from': from + 1,
+        'to':   to   + 1,
+      });
+    } catch (_) {}
+    // Ricarica per allineare con la realta' di RB
+    Future.delayed(const Duration(milliseconds: 500), () => loadQueue(silent: true));
   }
 
   /// Manda comando + polla cmd_result finché 'done'/'failed' o timeout 8s.
