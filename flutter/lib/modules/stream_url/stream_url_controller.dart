@@ -60,6 +60,8 @@ class StreamUrlController extends GetxController {
 
   // ── Polling timers ─────────────────────────────────────────────────
   Timer? _statusTimer;
+  Timer? _signaturesTimer;
+  bool _lastBridgeOnline = false;
   RegiaAppState _lastSeenState = RegiaAppState.unknown;
   bool _liveToastShown = false;
 
@@ -111,6 +113,22 @@ class StreamUrlController extends GetxController {
     _refreshStatus();
     loadSignatures();
     _statusTimer = Timer.periodic(const Duration(seconds: 4), (_) => _refreshStatus());
+    // Refresh signatures periodicamente: serve se l'utente ha aggiunto/modificato
+    // URL nella tab "URL di Riconoscimento" del Timer, o se il bridge era offline
+    // al primo load (signatures era vuoto e nessuno le ricaricava).
+    _signaturesTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (StatusService.to.bridgeOnline) loadSignatures();
+    });
+    // Reactive: appena il bridge torna online dopo essere stato offline,
+    // ricarica subito le signatures (evita di aspettare il prossimo tick 30s).
+    _lastBridgeOnline = StatusService.to.bridgeOnline;
+    ever<RegiaStatus>(StatusService.to.status, (_) {
+      final now = StatusService.to.bridgeOnline;
+      if (now && !_lastBridgeOnline) {
+        loadSignatures();
+      }
+      _lastBridgeOnline = now;
+    });
   }
 
   /// Carica le URL di Riconoscimento (sorgenti DJ) dal Timer.
@@ -159,6 +177,7 @@ class StreamUrlController extends GetxController {
   @override
   void onClose() {
     _statusTimer?.cancel();
+    _signaturesTimer?.cancel();
     urlCtrl.dispose();
     titleCtrl.dispose();
     hostCtrl.dispose();
