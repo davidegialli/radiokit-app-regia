@@ -28,8 +28,10 @@ class OnAirController extends GetxController {
   void onInit() {
     super.onInit();
     loadQueue();
+    // Refresh ogni 30s (era 20). Il polling singolo puo' durare fino a 20s,
+    // serve margine per non sovrapporre chiamate.
     _queueTimer = Timer.periodic(
-      const Duration(seconds: 20),
+      const Duration(seconds: 30),
       (_) => loadQueue(silent: true),
     );
   }
@@ -50,9 +52,12 @@ class OnAirController extends GetxController {
           'playlist.next_tracks', {'cnt': 10});
       final cid = sent['command_id']?.toString();
       if (cid == null || cid.isEmpty) return;
-      final deadline = DateTime.now().add(const Duration(seconds: 6));
+      // Deadline 20s: il bridge sotto carico (queue ingorgata) puo'
+      // impiegare 15-25s tra picked e ack. Era 6s e timeout-ava sempre,
+      // app mostrava "coda vuota" anche se i tracks sarebbero arrivati.
+      final deadline = DateTime.now().add(const Duration(seconds: 20));
       while (DateTime.now().isBefore(deadline)) {
-        await Future.delayed(const Duration(milliseconds: 500));
+        await Future.delayed(const Duration(milliseconds: 700));
         final r = await ApiService.to.cmdResult(cid);
         final st = (r['status'] ?? '').toString();
         if (st == 'done') {

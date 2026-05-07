@@ -366,16 +366,13 @@ class _QueueRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
-        SizedBox(width: 22, child: Text('${index + 1}',
-          style: const TextStyle(fontFamily: 'GeistMono', fontSize: 11, color: AppColors.text3, fontWeight: FontWeight.w600))),
-        const SizedBox(width: 6),
         if (isUrl)
-          const Icon(Icons.podcasts, size: 12, color: AppColors.accent)
+          const Icon(Icons.podcasts, size: 14, color: AppColors.accent)
         else
-          const Icon(Icons.music_note, size: 12, color: AppColors.text3),
-        const SizedBox(width: 8),
+          const Icon(Icons.music_note, size: 14, color: AppColors.text3),
+        const SizedBox(width: 10),
         Expanded(child: Text(display, maxLines: 1, overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontSize: 12, color: AppColors.text))),
+          style: const TextStyle(fontSize: 13, color: AppColors.text))),
         if (dur.isNotEmpty) ...[
           const SizedBox(width: 6),
           Text(dur, style: const TextStyle(fontFamily: 'GeistMono', fontSize: 9, color: AppColors.text3)),
