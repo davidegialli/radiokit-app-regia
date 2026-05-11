@@ -54,6 +54,9 @@ const Map<String, String> itIT = {
   'home.soon':          'Prossimamente',
   'onair.queue.title':  'CODA · prossime tracce',
   'onair.queue.empty':  'Coda vuota',
+  'onair.queue.deleteTitle':   'Elimina brano',
+  'onair.queue.deleteConfirm': 'Eliminare "@track" dalla coda?',
+  'onair.queue.deleteBtn':     'Elimina',
   'onair.queue.hint':   'Trascina la maniglia per riordinare',
   'home.kpiBridge':     'BRIDGE',
   'home.upcoming':      'Prossime dirette',
@@ -125,6 +128,7 @@ const Map<String, String> itIT = {
   'stream.toast.live':   'Diretta avviata: @title',
   'stream.toast.stopped':'Diretta terminata',
   'stream.toast.failed': 'Impossibile avviare la diretta',
+  'stream.confirm.queued': 'Diretta in coda — partirà a breve',
 
   'stream.title': 'Lancio diretta da URL',
   'stream.subtitle': 'Punta la regia a uno stream esterno (icecast/shoutcast/HLS) e imposta il titolo del programma.',

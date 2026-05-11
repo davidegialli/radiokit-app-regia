@@ -49,6 +49,9 @@ const Map<String, String> enUS = {
   'home.soon':          'Coming soon',
   'onair.queue.title':  'QUEUE · upcoming tracks',
   'onair.queue.empty':  'Queue empty',
+  'onair.queue.deleteTitle':   'Delete track',
+  'onair.queue.deleteConfirm': 'Remove "@track" from queue?',
+  'onair.queue.deleteBtn':     'Delete',
   'onair.queue.hint':   'Drag the handle to reorder',
   'home.kpiBridge':     'BRIDGE',
   'home.upcoming':      'Upcoming live',
@@ -115,6 +118,7 @@ const Map<String, String> enUS = {
   'stream.toast.live':    'Broadcast started: @title',
   'stream.toast.stopped': 'Broadcast stopped',
   'stream.toast.failed':  'Could not start broadcast',
+  'stream.confirm.queued': 'Live queued — starting shortly',
 
   'stream.title': 'Launch live from URL',
   'stream.subtitle': 'Point the control room to an external stream (icecast/shoutcast/HLS) and set the program title.',

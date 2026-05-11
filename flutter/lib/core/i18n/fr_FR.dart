@@ -49,6 +49,9 @@ const Map<String, String> frFR = {
   'home.soon':          'Bientôt',
   'onair.queue.title':  'FILE · prochaines pistes',
   'onair.queue.empty':  'File vide',
+  'onair.queue.deleteTitle':   'Supprimer la piste',
+  'onair.queue.deleteConfirm': 'Retirer « @track » de la file ?',
+  'onair.queue.deleteBtn':     'Supprimer',
   'onair.queue.hint':   'Faites glisser pour réordonner',
   'home.kpiBridge':     'BRIDGE',
   'home.upcoming':      'Prochains directs',
@@ -115,6 +118,7 @@ const Map<String, String> frFR = {
   'stream.toast.live':    'Direct lancé : @title',
   'stream.toast.stopped': 'Direct arrêté',
   'stream.toast.failed':  'Impossible de lancer le direct',
+  'stream.confirm.queued': 'Direct en file — démarrage imminent',
 
   'stream.title': 'Lancer un direct depuis une URL',
   'stream.subtitle': "Pointez la régie vers un flux externe (icecast/shoutcast/HLS) et définissez le titre de l'émission.",

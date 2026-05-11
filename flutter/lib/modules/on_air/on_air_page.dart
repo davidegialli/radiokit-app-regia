@@ -352,6 +352,28 @@ class _QueueRow extends StatelessWidget {
   final Map<String, dynamic> track;
   const _QueueRow({super.key, required this.index, required this.track});
 
+  Future<void> _confirmDelete(BuildContext context, String display) async {
+    final c = OnAirController.to;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text('onair.queue.deleteTitle'.tr),
+        content: Text('onair.queue.deleteConfirm'.tr.replaceAll('@track', display)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text('common.cancel'.tr)),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: AppColors.accent),
+            child: Text('onair.queue.deleteBtn'.tr),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) {
+      await c.deleteTrack(index);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final title  = (track['title']  ?? '').toString();
@@ -377,7 +399,16 @@ class _QueueRow extends StatelessWidget {
           const SizedBox(width: 6),
           Text(dur, style: const TextStyle(fontFamily: 'GeistMono', fontSize: 9, color: AppColors.text3)),
         ],
-        const SizedBox(width: 4),
+        const SizedBox(width: 2),
+        // Elimina brano: conferma popup → cmd playlist.delete (1-based) sul bridge.
+        InkWell(
+          onTap: () => _confirmDelete(context, display),
+          customBorder: const CircleBorder(),
+          child: const Padding(
+            padding: EdgeInsets.all(6),
+            child: Icon(Icons.close, size: 16, color: AppColors.text3),
+          ),
+        ),
         ReorderableDragStartListener(
           index: index,
           child: const Padding(

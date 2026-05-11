@@ -99,6 +99,21 @@ class OnAirController extends GetxController {
     Future.delayed(const Duration(milliseconds: 500), () => loadQueue(silent: true));
   }
 
+  /// Elimina la traccia in posizione `index` (UI 0-based, RB 1-based).
+  /// Optimistic update: rimuoviamo subito dalla lista locale e poi
+  /// allineamo con il bridge. Se la chiamata fallisce, il loadQueue
+  /// successivo ripristina lo stato vero di RadioBOSS.
+  Future<void> deleteTrack(int index) async {
+    if (index < 0 || index >= queue.length) return;
+    queue.removeAt(index);
+    try {
+      await ApiService.to.cmdSend('playlist.delete', {
+        'pos': index + 1,
+      });
+    } catch (_) {}
+    Future.delayed(const Duration(milliseconds: 500), () => loadQueue(silent: true));
+  }
+
   /// Manda comando + polla cmd_result finché 'done'/'failed' o timeout 8s.
   /// Il bottone resta in "in attesa…" fino al riscontro reale del bridge,
   /// non solo all'enqueue. Cosi' l'utente sa quando il comando e' davvero

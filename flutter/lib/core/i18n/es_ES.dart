@@ -49,6 +49,9 @@ const Map<String, String> esES = {
   'home.soon':          'Próximamente',
   'onair.queue.title':  'COLA · próximas pistas',
   'onair.queue.empty':  'Cola vacía',
+  'onair.queue.deleteTitle':   'Eliminar pista',
+  'onair.queue.deleteConfirm': '¿Quitar «@track» de la cola?',
+  'onair.queue.deleteBtn':     'Eliminar',
   'onair.queue.hint':   'Arrastra para reordenar',
   'home.kpiBridge':     'BRIDGE',
   'home.upcoming':      'Próximos directos',
@@ -115,6 +118,7 @@ const Map<String, String> esES = {
   'stream.toast.live':    'Directo iniciado: @title',
   'stream.toast.stopped': 'Directo terminado',
   'stream.toast.failed':  'No se pudo iniciar el directo',
+  'stream.confirm.queued': 'Directo en cola — comenzará en breve',
 
   'stream.title': 'Lanzar directo desde URL',
   'stream.subtitle': 'Apunta el control a un stream externo (icecast/shoutcast/HLS) y configura el título del programa.',
