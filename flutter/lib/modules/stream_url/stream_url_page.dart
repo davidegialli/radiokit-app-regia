@@ -171,6 +171,18 @@ class StreamUrlPage extends GetView<StreamUrlController> {
         )),
       ),
       const SizedBox(height: 12), const Divider(height: 1), const SizedBox(height: 12),
+      RkFieldRow(
+        label: 'stream.hostLabel'.tr,
+        hint: 'stream.hostHint'.tr,
+        child: Obx(() => TextField(
+          controller: controller.hostCtrl,
+          enabled: !controller.formLocked,
+          maxLength: 40,
+          style: const TextStyle(fontSize: 13),
+          decoration: const InputDecoration(counterText: ''),
+        )),
+      ),
+      const SizedBox(height: 12), const Divider(height: 1), const SizedBox(height: 12),
       Obx(() {
         final m = controller.startMode.value;
         final hint = m == StartMode.now      ? 'stream.startModeNowHint'.tr
