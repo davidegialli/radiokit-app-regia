@@ -62,6 +62,33 @@ class ApiService extends GetxService {
     return Map<String, dynamic>.from(r.data as Map);
   }
 
+  /// Stats listener server-side (popolate dal poller cron VPS).
+  /// Ritorna {streams:[{url,name,type,last_listeners,...}], listeners_now}.
+  Future<Map<String, dynamic>> statsStreams() async {
+    final r = await _dio.get('?action=stats_streams');
+    return Map<String, dynamic>.from(r.data as Map);
+  }
+
+  /// Storico realtime: snapshot 30s, ultimi N minuti (default 60).
+  Future<Map<String, dynamic>> statsRealtime({int minutes = 60}) async {
+    final r = await _dio.get('?action=stats_realtime&minutes=$minutes');
+    return Map<String, dynamic>.from(r.data as Map);
+  }
+
+  /// Aggregato hourly (24h/7d) o daily (30d/90d).
+  Future<Map<String, dynamic>> statsHistory({String range = '7d', int? streamId}) async {
+    var path = '?action=stats_history&range=$range';
+    if (streamId != null) path += '&stream=$streamId';
+    final r = await _dio.get(path);
+    return Map<String, dynamic>.from(r.data as Map);
+  }
+
+  /// KPI sintetici: now, 24h avg/peak, 7d avg/peak.
+  Future<Map<String, dynamic>> statsSummary() async {
+    final r = await _dio.get('?action=stats_summary');
+    return Map<String, dynamic>.from(r.data as Map);
+  }
+
   /// Invia un comando generico al bridge (handler in radiokit_regia_bridge.py).
   /// Ritorna `{command_id, status:'pending'}`.
   Future<Map<String, dynamic>> cmdSend(String type, [Map<String, dynamic>? payload]) async {

@@ -7,17 +7,14 @@ import '../../core/services/api_service.dart';
 import '../../core/services/status_service.dart';
 
 /// Controller del tab Streaming (ex Listeners).
-/// Carica la lista degli stream OUTPUT configurati nel Timer (tab
-/// Trasmissione) via cmd `monitor.streams_preset` + cmd_result polling.
 ///
-/// La lista contiene gli URL pubblici (icecast/shoutcast/HLS) verso cui
-/// si connettono gli ascoltatori — non gli URL sorgente per il relay
-/// (quelli stanno nella tab Diretta come "recents").
+/// Legge stats listener direttamente dall'API VPS (`stats_streams`)
+/// alimentata da poller cron server-side ogni 30s. Non più via bridge
+/// locale → meno carico sul PC della regia + dati sempre disponibili
+/// anche se il bridge è offline o Timer è chiuso.
 ///
-/// Stats per-stream individuali (count/peak/bitrate per ogni stream) sono
-/// in arrivo: richiedono il bridge handler `monitor.listener_stats` non
-/// ancora implementato. Per ora mostriamo l'aggregato globale di
-/// /status sopra alla lista.
+/// Fallback graceful: se l'endpoint VPS non risponde (deploy vecchio
+/// API), prova ancora il vecchio path bridge `monitor.listener_stats`.
 class ListenersController extends GetxController {
   static ListenersController get to => Get.find<ListenersController>();
 
@@ -46,32 +43,57 @@ class ListenersController extends GetxController {
     super.onClose();
   }
 
-  /// Carica la lista stream + stats realtime (count, peak, bitrate per
-  /// ogni stream). Usa il bridge handler `monitor.listener_stats`.
-  /// Fallback graceful: se l'handler non risponde (Timer non aggiornato),
-  /// usa `monitor.streams_preset` per avere almeno la lista metadata.
+  /// Carica la lista stream + stats listener real-time.
+  /// Primary path: API VPS `stats_streams` (server-side poller).
+  /// Fallback path: bridge cmd `monitor.listener_stats` (deploy vecchio).
   Future<void> loadStreams({bool silent = false}) async {
     if (loading.value) return;
-    if (!StatusService.to.bridgeOnline) {
-      // Bridge offline: tieni la lista corrente, niente reset
-      return;
-    }
     if (!silent) loading.value = true;
     error.value = null;
 
-    // listener_stats ritorna gia' tutti i campi necessari (url, label, type,
-    // primary, online, listeners, peak, bitrate, codec) — niente fallback
-    // a streams_preset (era duplicato pre-deploy nuovo bridge).
-    final got = await _callCmd('monitor.listener_stats');
-    if (got != null && got['streams'] is List) {
-      final list = (got['streams'] as List)
-          .whereType<Map>()
-          .map((e) => Map<String, dynamic>.from(e))
-          .where((e) => (e['url'] ?? '').toString().isNotEmpty)
-          .toList();
-      streams.assignAll(list);
-      final tot = got['total_listeners'];
-      totalListeners.value = tot is int ? tot : null;
+    bool ok = false;
+
+    // 1) Primary: API VPS server-side
+    try {
+      final r = await ApiService.to.statsStreams();
+      if (r['ok'] == true && r['streams'] is List) {
+        final list = (r['streams'] as List)
+            .whereType<Map>()
+            .map((m) {
+              final mm = Map<String, dynamic>.from(m);
+              // Normalizza il campo per la UI: 'listeners' (vs last_listeners)
+              mm['listeners'] = mm['last_listeners'] ?? mm['listeners'] ?? 0;
+              mm['online'] = mm['last_poll_ok'] == 1 || mm['last_poll_ok'] == true;
+              mm['label']  = mm['name'] ?? mm['label'] ?? mm['url'];
+              return mm;
+            })
+            .where((e) => (e['url'] ?? '').toString().isNotEmpty)
+            .toList();
+        streams.assignAll(list);
+        final tot = r['listeners_now'];
+        totalListeners.value = tot is int ? tot : null;
+        ok = true;
+      }
+    } on DioException catch (e) {
+      // VPS API 404 / offline → fallback bridge
+      error.value = e.message;
+    } catch (e) {
+      error.value = e.toString();
+    }
+
+    // 2) Fallback bridge (legacy)
+    if (!ok && StatusService.to.bridgeOnline) {
+      final got = await _callCmd('monitor.listener_stats');
+      if (got != null && got['streams'] is List) {
+        final list = (got['streams'] as List)
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .where((e) => (e['url'] ?? '').toString().isNotEmpty)
+            .toList();
+        streams.assignAll(list);
+        final tot = got['total_listeners'];
+        totalListeners.value = tot is int ? tot : null;
+      }
     }
 
     if (!silent) loading.value = false;
