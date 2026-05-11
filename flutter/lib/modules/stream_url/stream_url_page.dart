@@ -132,9 +132,20 @@ class StreamUrlPage extends GetView<StreamUrlController> {
   // ── FORM: URL + titolo + start mode (essenziale) ────────────────
   Widget _form() {
     return RkCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text('stream.sourceTitle'.tr,
-        style: const TextStyle(fontFamily: 'GeistMono', fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.text2, letterSpacing: 1.2)),
-      const SizedBox(height: 12),
+      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+        Text('stream.sourceTitle'.tr,
+          style: const TextStyle(fontFamily: 'GeistMono', fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.text2, letterSpacing: 1.2)),
+        Obx(() => controller.recents.isEmpty
+            ? const SizedBox.shrink()
+            : GestureDetector(
+                onTap: controller.formLocked ? null : controller.clearRecents,
+                child: Text('stream.recents.clear'.tr,
+                  style: const TextStyle(fontFamily: 'GeistMono', fontSize: 9, color: AppColors.text3, letterSpacing: 0.5)),
+              )),
+      ]),
+      const SizedBox(height: 10),
+      _signatureChips(),
+      _recentsChips(),
       RkFieldRow(
         label: 'stream.urlLabel'.tr,
         hint: 'stream.urlHint'.tr,
@@ -212,5 +223,103 @@ class StreamUrlPage extends GetView<StreamUrlController> {
         child: Text('stream.cta.stop'.tr),
       );
     });
+  }
+
+  // Signatures = URL preconfigurate nel Timer (tab "URL di Riconoscimento")
+  // Quick-tap → riempie il form URL.
+  Widget _signatureChips() {
+    return Obx(() {
+      final list = controller.signatures;
+      if (list.isEmpty) return const SizedBox.shrink();
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: Wrap(
+          spacing: 6, runSpacing: 6,
+          children: list.map((sig) {
+            final url = (sig['url'] ?? '').toString();
+            final selected = url == controller.url.value;
+            final shortFull = _shortUrl(url);
+            final short = shortFull.length > 28 ? '${shortFull.substring(0, 26)}…' : shortFull;
+            return GestureDetector(
+              onTap: controller.formLocked ? null : () => controller.applySignature(sig),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: selected ? AppColors.accent.withOpacity(0.15) : AppColors.bg,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(
+                    color: selected ? AppColors.accent : AppColors.hairlineSoft,
+                  ),
+                ),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  const Icon(Icons.podcasts, size: 11, color: AppColors.text3),
+                  const SizedBox(width: 5),
+                  Text(short,
+                    style: TextStyle(
+                      fontFamily: 'GeistMono',
+                      fontSize: 10,
+                      fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                      color: selected ? AppColors.accent : AppColors.text2,
+                    ),
+                  ),
+                ]),
+              ),
+            );
+          }).toList(),
+        ),
+      );
+    });
+  }
+
+  // Recents = ultimi URL lanciati con successo.
+  Widget _recentsChips() {
+    return Obx(() {
+      if (controller.recents.isEmpty) return const SizedBox.shrink();
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: Wrap(
+          spacing: 6, runSpacing: 6,
+          children: controller.recents.map((url) {
+            final selected = url == controller.url.value;
+            final short = _shortUrl(url);
+            return GestureDetector(
+              onTap: controller.formLocked ? null : () => controller.applyRecent(url),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: selected ? AppColors.accent.withOpacity(0.15) : AppColors.bg,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(
+                    color: selected ? AppColors.accent : AppColors.hairlineSoft,
+                  ),
+                ),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  const Icon(Icons.history, size: 11, color: AppColors.text3),
+                  const SizedBox(width: 5),
+                  Text(
+                    short.length > 28 ? '${short.substring(0, 26)}…' : short,
+                    style: TextStyle(
+                      fontFamily: 'GeistMono',
+                      fontSize: 10,
+                      fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                      color: selected ? AppColors.accent : AppColors.text2,
+                    ),
+                  ),
+                ]),
+              ),
+            );
+          }).toList(),
+        ),
+      );
+    });
+  }
+
+  String _shortUrl(String u) {
+    try {
+      final x = Uri.parse(u);
+      return '${x.host}${x.path.length > 1 ? x.path : ''}';
+    } catch (_) {
+      return u.isEmpty ? '—' : u;
+    }
   }
 }
