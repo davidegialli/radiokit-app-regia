@@ -165,13 +165,23 @@ class StreamUrlController extends GetxController {
     }
   }
 
-  /// Tap su una signature → riempie il form URL.
+  /// Tap su una signature → riempie il form URL + auto-titolo se vuoto.
+  /// Il titolo è obbligatorio per "Vai in onda": prendiamo il label della
+  /// chip se l'utente non l'ha ancora digitato, così il bottone si attiva subito.
   void applySignature(Map<String, dynamic> sig) {
     if (formLocked) return;
     final u = (sig['url'] ?? '').toString();
     if (u.isEmpty) return;
     urlCtrl.text = u;
     url.value = u;
+    // Auto-titolo se vuoto
+    if (titleCtrl.text.trim().isEmpty) {
+      final label = (sig['label'] ?? '').toString().trim();
+      if (label.isNotEmpty && !label.toLowerCase().startsWith('http')) {
+        titleCtrl.text = label;
+        title.value = label;
+      }
+    }
   }
 
   @override
