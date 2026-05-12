@@ -43,13 +43,14 @@ class OnAirController extends GetxController {
     super.onClose();
   }
 
-  /// Carica le prossime 10 tracce in playlist da RB via bridge.
+  /// Carica le prossime 25 tracce in playlist da RB via bridge.
+  /// Item: {pos, title, artist, filename, duration, is_url, category, color}
   Future<void> loadQueue({bool silent = false}) async {
     if (queueLoading.value) return;
     if (!silent) queueLoading.value = true;
     try {
       final sent = await ApiService.to.cmdSend(
-          'playlist.next_tracks', {'cnt': 10});
+          'playlist.next_tracks', {'cnt': 25});
       final cid = sent['command_id']?.toString();
       if (cid == null || cid.isEmpty) return;
       // Deadline 20s: il bridge sotto carico (queue ingorgata) puo'

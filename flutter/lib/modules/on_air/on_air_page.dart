@@ -374,6 +374,39 @@ class _QueueRow extends StatelessWidget {
     }
   }
 
+  /// Mappa nome-categoria (RadioBOSS) → colore fallback SE RB non espone COLOR.
+  /// Quando RB esporta COLOR esplicito, viene sempre rispettato e questa
+  /// mappa NON viene usata.
+  /// Convenzioni allineate alle categorie di RadioBOSS (Stereo 98 standard):
+  ///   STATION / MUSIC = verde, JINGLE = giallo, SPOT/AD = magenta.
+  static const Map<String, Color> _categoryColors = {
+    'station': Color(0xFF5FC594), // verde (canzoni in onda — "stazione")
+    'music':   Color(0xFF5FC594), // verde (alias di station)
+    'jingle':  Color(0xFFE3B85A), // giallo
+    'spot':    Color(0xFFD61F7A), // magenta brand
+    'ad':      Color(0xFFD61F7A), // magenta (advertising = spot)
+    'promo':   Color(0xFFD61F7A),
+    'id':      Color(0xFF6BB1E0), // blu (station ID)
+    'voice':   Color(0xFFA47BC9), // viola (voce dj)
+    'podcast': Color(0xFFE6614F), // rosso
+    'news':    Color(0xFFE3B85A), // giallo (come jingle)
+  };
+
+  Color? _resolveColor(String? rbHex, String category) {
+    // 1) colore esplicito da RadioBOSS (es. "#FFE800")
+    if (rbHex != null && rbHex.startsWith('#') && rbHex.length == 7) {
+      try {
+        return Color(0xFF000000 | int.parse(rbHex.substring(1), radix: 16));
+      } catch (_) {}
+    }
+    // 2) fallback per nome categoria
+    final key = category.trim().toLowerCase();
+    for (final entry in _categoryColors.entries) {
+      if (key.contains(entry.key)) return entry.value;
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final title  = (track['title']  ?? '').toString();
@@ -381,23 +414,55 @@ class _QueueRow extends StatelessWidget {
     final dur    = (track['duration'] ?? '').toString();
     final isUrl  = track['is_url'] == true;
     final fn     = (track['filename'] ?? '').toString();
+    final cat    = (track['category'] ?? '').toString();
+    final rbCol  = track['color'] as String?;
+    final swatch = _resolveColor(rbCol, cat);
+
     // Display: se title vuoto, usa basename del filename
     final display = title.isNotEmpty
         ? (artist.isNotEmpty ? '$artist — $title' : title)
         : (fn.split(RegExp(r'[\/]')).last);
+
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(vertical: 9),
       child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+        // Barra-color sinistra per categoria/colore RB (oppure spazio vuoto)
+        Container(
+          width: 3,
+          height: 28,
+          margin: const EdgeInsets.only(right: 10),
+          decoration: BoxDecoration(
+            color: swatch ?? AppColors.hairlineSoft,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
         if (isUrl)
-          const Icon(Icons.podcasts, size: 14, color: AppColors.accent)
+          const Icon(Icons.podcasts, size: 16, color: AppColors.accent)
         else
-          const Icon(Icons.music_note, size: 14, color: AppColors.text3),
+          Icon(Icons.music_note, size: 16,
+            color: swatch?.withOpacity(0.85) ?? AppColors.text3),
         const SizedBox(width: 10),
-        Expanded(child: Text(display, maxLines: 1, overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontSize: 13, color: AppColors.text))),
+        Expanded(child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(display, maxLines: 1, overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 13.5, color: AppColors.text, height: 1.2)),
+            if (cat.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Text(cat.toUpperCase(),
+                  style: TextStyle(
+                    fontFamily: 'GeistMono', fontSize: 9, letterSpacing: 0.8,
+                    color: swatch ?? AppColors.text3,
+                    fontWeight: FontWeight.w600,
+                  )),
+              ),
+          ],
+        )),
         if (dur.isNotEmpty) ...[
           const SizedBox(width: 6),
-          Text(dur, style: const TextStyle(fontFamily: 'GeistMono', fontSize: 9, color: AppColors.text3)),
+          Text(dur, style: const TextStyle(fontFamily: 'GeistMono', fontSize: 10, color: AppColors.text3)),
         ],
         const SizedBox(width: 2),
         // Elimina brano: conferma popup → cmd playlist.delete (1-based) sul bridge.
