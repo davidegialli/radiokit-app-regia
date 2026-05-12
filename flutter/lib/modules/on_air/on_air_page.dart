@@ -423,19 +423,50 @@ class _QueueRow extends StatelessWidget {
         ? (artist.isNotEmpty ? '$artist — $title' : title)
         : (fn.split(RegExp(r'[\/]')).last);
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 9),
+    final isNext = index == 0; // prima in coda = prossima a suonare
+    return Container(
+      // Highlight della NEXT track: bg leggero accent + bordo sinistro spesso
+      decoration: isNext
+          ? BoxDecoration(
+              color: AppColors.accentSoft,
+              borderRadius: BorderRadius.circular(6),
+              border: const Border(
+                left: BorderSide(color: AppColors.accent, width: 3),
+              ),
+            )
+          : null,
+      padding: EdgeInsets.only(
+        top: 9, bottom: 9,
+        left: isNext ? 8 : 0,
+        right: isNext ? 6 : 0,
+      ),
+      margin: EdgeInsets.only(bottom: isNext ? 4 : 0),
       child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
-        // Barra-color sinistra per categoria/colore RB (oppure spazio vuoto)
-        Container(
-          width: 3,
-          height: 28,
-          margin: const EdgeInsets.only(right: 10),
-          decoration: BoxDecoration(
-            color: swatch ?? AppColors.hairlineSoft,
-            borderRadius: BorderRadius.circular(2),
+        // Badge "NEXT" sulla prima riga (sostituisce barra-color)
+        if (isNext)
+          Container(
+            margin: const EdgeInsets.only(right: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: AppColors.accent,
+              borderRadius: BorderRadius.circular(3),
+            ),
+            child: const Text('NEXT',
+              style: TextStyle(
+                fontFamily: 'GeistMono', fontSize: 9, color: Colors.white,
+                fontWeight: FontWeight.w700, letterSpacing: 0.8,
+              )),
+          )
+        else
+          Container(
+            width: 3,
+            height: 28,
+            margin: const EdgeInsets.only(right: 10),
+            decoration: BoxDecoration(
+              color: swatch ?? AppColors.hairlineSoft,
+              borderRadius: BorderRadius.circular(2),
+            ),
           ),
-        ),
         if (isUrl)
           const Icon(Icons.podcasts, size: 16, color: AppColors.accent)
         else
