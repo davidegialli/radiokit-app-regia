@@ -21,22 +21,20 @@ class ListenersPage extends StatelessWidget {
     return Column(children: [
       PageHeader(title: 'tab.listeners'.tr, eyebrow: 'stats.eyebrow'.tr),
       Expanded(
-        child: RefreshIndicator(
-          color: AppColors.accent,
-          onRefresh: () => ListenersController.to.refreshAll(),
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: const [
-              _SummaryGrid(),
-              SizedBox(height: 14),
-              _RealtimeCard(),
-              SizedBox(height: 14),
-              _HistoryCard(),
-              SizedBox(height: 14),
-              _PerStreamCard(),
-            ]),
-          ),
+        // ListView (anziché SingleChildScrollView+RefreshIndicator) si
+        // auto-bounda all'altezza del contenuto: niente over-scroll
+        // "grigio infinito" sotto l'ultima card.
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 48),
+          children: const [
+            _SummaryGrid(),
+            SizedBox(height: 14),
+            _RealtimeCard(),
+            SizedBox(height: 14),
+            _HistoryCard(),
+            SizedBox(height: 14),
+            _PerStreamCard(),
+          ],
         ),
       ),
     ]);
