@@ -166,7 +166,11 @@ class _RealtimeCard extends StatelessWidget {
             child: CustomPaint(
               size: Size.infinite,
               painter: _SparklinePainter(
-                samples: pts.map((p) => (p['l'] as num?)?.toInt() ?? 0).toList(),
+                samples: pts.map((p) {
+                  final v = p['l'];
+                  if (v is num) return v.toInt();
+                  return int.tryParse(v?.toString() ?? '') ?? 0;
+                }).toList(),
               ),
             ),
           ),
@@ -185,12 +189,19 @@ class _HistoryCard extends StatelessWidget {
       final c = ListenersController.to;
       // Aggrego i punti history per bucket (sommando i listeners di tutti gli stream
       // dello stesso istante temporale).
+      // Parser tollerante: MySQL via PDO può ritornare DECIMAL come String.
+      // 'as num?' su String → TypeError → ErrorWidget grigio.
+      double _num(dynamic v) {
+        if (v == null) return 0;
+        if (v is num) return v.toDouble();
+        return double.tryParse(v.toString()) ?? 0;
+      }
       final byBucket = <String, double>{};
       final byBucketPeak = <String, double>{};
       for (final p in c.historySeries) {
         final b = (p['bucket'] ?? '').toString();
-        final avg = (p['avg_listeners'] as num?)?.toDouble() ?? 0;
-        final peak = (p['peak_listeners'] as num?)?.toDouble() ?? 0;
+        final avg = _num(p['avg_listeners']);
+        final peak = _num(p['peak_listeners']);
         byBucket[b] = (byBucket[b] ?? 0) + avg;
         byBucketPeak[b] = (byBucketPeak[b] ?? 0) < peak ? peak : (byBucketPeak[b] ?? 0);
       }
