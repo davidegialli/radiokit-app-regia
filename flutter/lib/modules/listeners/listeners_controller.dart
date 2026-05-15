@@ -25,6 +25,20 @@ class ListenersController extends GetxController {
   final loading = false.obs;
   final error = RxnString();
 
+  // KPI summary: { now, avg_24h, peak_24h, avg_7d, peak_7d }
+  final summary = Rxn<Map<String, dynamic>>();
+
+  // Realtime series (ultimi 60 minuti, granularità 30s): [{ts, l}]
+  final realtimeSeries = <Map<String, dynamic>>[].obs;
+  // Per-stream realtime series (per breakdown chart per ogni mount)
+  final realtimePerStream = <Map<String, dynamic>>[].obs;
+
+  // History series: dipende da selectedRange
+  final historySeries = <Map<String, dynamic>>[].obs;
+  // Range selezionato per la sezione "Andamento": '24h' | '7d' | '30d'
+  final selectedRange = '24h'.obs;
+  final historyLoading = false.obs;
+
   // Polling ogni 15s per refresh stats. UX percepita fresca senza
   // saturare il bridge (4 stream * 1 cmd / 15s = OK).
   static const _pollInterval = Duration(seconds: 15);
@@ -33,14 +47,91 @@ class ListenersController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    loadStreams();
-    _timer = Timer.periodic(_pollInterval, (_) => loadStreams(silent: true));
+    refreshAll();
+    _timer = Timer.periodic(_pollInterval, (_) => refreshAll(silent: true));
+    // Quando l'utente cambia il range storico, ricarica solo quello.
+    ever<String>(selectedRange, (_) => loadHistory());
   }
 
   @override
   void onClose() {
     _timer?.cancel();
     super.onClose();
+  }
+
+  /// Carica tutto: stream + summary + realtime + history.
+  /// Chiamato all'init e a ogni tick del poller.
+  Future<void> refreshAll({bool silent = false}) async {
+    await Future.wait([
+      loadStreams(silent: silent),
+      loadSummary(),
+      loadRealtime(),
+    ]);
+    // history la ricarichiamo meno spesso (ogni 5 cicli = 75s) per non
+    // sovraccaricare: l'aggregato hourly/daily cambia poco minuto-su-minuto.
+    if (historySeries.isEmpty || _historyTick++ % 5 == 0) {
+      await loadHistory();
+    }
+  }
+  int _historyTick = 0;
+
+  Future<void> loadSummary() async {
+    try {
+      final r = await ApiService.to.statsSummary();
+      if (r['ok'] == true) {
+        summary.value = {
+          'now':       r['now']       ?? 0,
+          'avg_24h':   r['avg_24h']   ?? 0,
+          'peak_24h':  r['peak_24h']  ?? 0,
+          'avg_7d':    r['avg_7d']    ?? 0,
+          'peak_7d':   r['peak_7d']   ?? 0,
+        };
+      }
+    } catch (_) {}
+  }
+
+  Future<void> loadRealtime() async {
+    try {
+      final r = await ApiService.to.statsRealtime(minutes: 60);
+      if (r['ok'] == true) {
+        final ts = r['total_series'];
+        if (ts is List) {
+          realtimeSeries.assignAll(
+            ts.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList(),
+          );
+        }
+        final ps = r['per_stream'];
+        if (ps is List) {
+          realtimePerStream.assignAll(
+            ps.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList(),
+          );
+        }
+      }
+    } catch (_) {}
+  }
+
+  Future<void> loadHistory() async {
+    if (historyLoading.value) return;
+    historyLoading.value = true;
+    try {
+      final r = await ApiService.to.statsHistory(range: selectedRange.value);
+      if (r['ok'] == true && r['points'] is List) {
+        historySeries.assignAll(
+          (r['points'] as List)
+              .whereType<Map>()
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList(),
+        );
+      }
+    } catch (_) {} finally {
+      historyLoading.value = false;
+    }
+  }
+
+  void setRange(String range) {
+    if (['24h', '7d', '30d'].contains(range)) {
+      selectedRange.value = range;
+    }
   }
 
   /// Carica la lista stream + stats listener real-time.
