@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 
 import '../../core/constants/app_constants.dart';
@@ -45,8 +46,41 @@ class ActivationController extends GetxController {
       StatusService.to.start();
       RkToast.show('activation.bridgeFound'.tr, kind: RkToastKind.success);
       Get.offAllNamed(AppRoutes.shell);
+    } on DioException catch (e) {
+      // Server ha risposto con stato HTTP non-2xx ma corpo JSON strutturato
+      // (es. {"ok":false, "error":"key_expired", "message":"Beta scaduta."})
+      final data = e.response?.data;
+      String? serverMsg;
+      String? serverCode;
+      if (data is Map) {
+        serverMsg  = data['message']?.toString();
+        serverCode = data['error']?.toString();
+      }
+      // Mapping codici noti → chiavi i18n locali (se disponibili)
+      String? i18nKey;
+      switch (serverCode) {
+        case 'key_expired':     i18nKey = 'activation.keyExpired'; break;
+        case 'not_approved':    i18nKey = 'activation.notApproved'; break;
+        case 'invalid_key_format':
+        case 'wrong_product':
+        case 'not_found':       i18nKey = 'activation.invalidKey'; break;
+      }
+      String msg;
+      if (i18nKey != null) {
+        final t = i18nKey.tr;
+        msg = (t == i18nKey) ? (serverMsg ?? i18nKey) : t; // fallback se i18n manca
+      } else if (serverMsg != null && serverMsg.isNotEmpty) {
+        msg = serverMsg;
+      } else if (e.type == DioExceptionType.connectionTimeout ||
+                 e.type == DioExceptionType.receiveTimeout ||
+                 e.type == DioExceptionType.connectionError) {
+        msg = 'activation.networkError'.tr;
+      } else {
+        msg = 'activation.genericError'.tr;
+      }
+      error.value = msg;
     } catch (e) {
-      error.value = e.toString();
+      error.value = 'activation.genericError'.tr;
     } finally {
       loading.value = false;
     }

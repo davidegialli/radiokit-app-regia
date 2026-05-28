@@ -32,7 +32,11 @@ const Map<String, String> esES = {
   'activation.activate': 'Activar',
   'activation.invalidKey': 'Clave no válida',
   'activation.noBridge': 'Sin bridge activo. Inicia Timer o Diretta en el PC del estudio.',
-  'activation.bridgeFound': 'Bridge detectado',
+  'activation.keyExpired': 'Beta caducada. Contacta al admin para extender.',
+  'activation.notApproved': 'Cuenta pendiente de aprobación.',
+  'activation.genericError': 'Error. Inténtalo de nuevo.',
+  'activation.networkError': 'Error de red. Verifica tu conexión.',
+ 'Bridge detectado',
 
   'home.statusOnAir': 'EN EL AIRE',
   'home.statusAutoDj': 'AUTODJ',

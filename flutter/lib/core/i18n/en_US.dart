@@ -32,7 +32,11 @@ const Map<String, String> enUS = {
   'activation.activate': 'Activate',
   'activation.invalidKey': 'Invalid key',
   'activation.noBridge': 'No bridge online. Start Timer or Diretta on the studio PC.',
-  'activation.bridgeFound': 'Bridge detected',
+  'activation.keyExpired': 'Beta expired. Contact admin to extend.',
+  'activation.notApproved': 'Account pending approval.',
+  'activation.genericError': 'Error. Please try again later.',
+  'activation.networkError': 'Network error. Check your connection.',
+ 'Bridge detected',
 
   'home.statusOnAir': 'ON AIR',
   'home.statusAutoDj': 'AUTODJ',
