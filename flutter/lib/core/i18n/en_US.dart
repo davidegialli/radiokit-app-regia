@@ -36,7 +36,7 @@ const Map<String, String> enUS = {
   'activation.notApproved': 'Account pending approval.',
   'activation.genericError': 'Error. Please try again later.',
   'activation.networkError': 'Network error. Check your connection.',
- 'Bridge detected',
+  'activation.bridgeFound': 'Bridge detected',
 
   'home.statusOnAir': 'ON AIR',
   'home.statusAutoDj': 'AUTODJ',

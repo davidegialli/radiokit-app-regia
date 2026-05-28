@@ -36,11 +36,11 @@ const Map<String, String> itIT = {
   'activation.activate': 'Attiva',
   'activation.invalidKey': 'Chiave non valida',
   'activation.noBridge': 'Nessun bridge attivo. Avvia Timer o Diretta sul PC studio.',
-  'activation.keyExpired': 'Beta scaduta. Contatta l'admin per estendere.',
+  'activation.keyExpired': "Beta scaduta. Contatta l'admin per estendere.",
   'activation.notApproved': 'Account in attesa di approvazione.',
   'activation.genericError': 'Errore. Riprova più tardi.',
   'activation.networkError': 'Errore di rete. Verifica la connessione.',
- 'Bridge rilevato',
+  'activation.bridgeFound': 'Bridge rilevato',
 
   // Home / Dashboard
   'home.statusOnAir': 'IN ONDA',

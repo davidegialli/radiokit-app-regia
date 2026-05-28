@@ -36,7 +36,7 @@ const Map<String, String> esES = {
   'activation.notApproved': 'Cuenta pendiente de aprobación.',
   'activation.genericError': 'Error. Inténtalo de nuevo.',
   'activation.networkError': 'Error de red. Verifica tu conexión.',
- 'Bridge detectado',
+  'activation.bridgeFound': 'Bridge detectado',
 
   'home.statusOnAir': 'EN EL AIRE',
   'home.statusAutoDj': 'AUTODJ',
