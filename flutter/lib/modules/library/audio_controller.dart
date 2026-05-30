@@ -248,8 +248,21 @@ class AudioController extends GetxController {
       AudioKind.jingle => 'jingle',
       AudioKind.spot   => 'spot',
     };
+
+    // Se l'utente ha dato un titolo, usalo anche come NOME FILE inviato: così
+    // RadioBOSS lo mostra nella playlist (oltre al tag in onda gestito dal
+    // bridge). Senza titolo resta il nome auto (voice_<ts> / file pickato).
+    String uploadName = n;
+    if (effectiveTitle.isNotEmpty) {
+      final ext = n.contains('.') ? n.substring(n.lastIndexOf('.')) : '';
+      final safe = effectiveTitle
+          .replaceAll(RegExp(r'[^A-Za-z0-9 _\-.()À-ÿ]'), '_')
+          .trim();
+      if (safe.isNotEmpty) uploadName = '$safe$ext';
+    }
+
     final entry = <String, dynamic>{
-      'filename': n,
+      'filename': uploadName,
       'title': effectiveTitle.isEmpty ? null : effectiveTitle,
       'kind': kindStr,
       'sent_at': DateTime.now().toIso8601String(),
@@ -263,7 +276,7 @@ class AudioController extends GetxController {
       final useNormalize = (kind.value == AudioKind.voice) && normalize.value;
       final r = await ApiService.to.audioUpload(
         filePath: p,
-        filename: n,
+        filename: uploadName,
         kind: kindStr,
         mode: 'endtrack',
         normalize: useNormalize,
