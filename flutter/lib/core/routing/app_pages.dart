@@ -5,6 +5,7 @@ import '../../modules/activation/activation_binding.dart';
 import '../../modules/account/account_page.dart';
 import '../../modules/push/push_page.dart';
 import '../../modules/history/history_page.dart';
+import '../../modules/trial/trial_expired_page.dart';
 import '../../shared/widgets/app_shell.dart';
 import 'app_routes.dart';
 import 'splash_page.dart';
@@ -23,6 +24,10 @@ class AppPages {
     GetPage(
       name: AppRoutes.shell,
       page: () => const AppShell(),
+    ),
+    GetPage(
+      name: AppRoutes.trialExpired,
+      page: () => const TrialExpiredPage(),
     ),
     GetPage(
       name: AppRoutes.account,

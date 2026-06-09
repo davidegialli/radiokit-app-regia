@@ -31,6 +31,23 @@ class StorageService extends GetxService {
       ? _box.remove(AppConstants.storageKeyUserName)
       : _box.write(AppConstants.storageKeyUserName, v);
 
+  // ── Scadenza prova (trial) ──────────────────────
+  String? get licenseExpires => _box.read<String>(AppConstants.storageKeyLicenseExpires);
+  set licenseExpires(String? v) => (v == null || v.isEmpty)
+      ? _box.remove(AppConstants.storageKeyLicenseExpires)
+      : _box.write(AppConstants.storageKeyLicenseExpires, v);
+
+  /// True se la prova è scaduta in base all'ultimo `expires_at` noto.
+  /// FAIL-OPEN: senza data nota o non parsabile → NON bloccare (no brick).
+  bool get isTrialExpired {
+    final s = licenseExpires;
+    if (s == null || s.isEmpty) return false;
+    // Server format MySQL "Y-m-d H:i:s" → ISO con 'T'.
+    final d = DateTime.tryParse(s.contains('T') ? s : s.replaceFirst(' ', 'T'));
+    if (d == null) return false;
+    return DateTime.now().isAfter(d);
+  }
+
   // ── Servizi abilitati per chiave ─────────────────
   List<String> get services {
     final raw = _box.read<List>(AppConstants.storageKeyServices) ?? const [];
@@ -52,6 +69,7 @@ class StorageService extends GetxService {
     services = const [];
     radioId = null;
     userName = null;
+    licenseExpires = null;
   }
 
   // ── Generic key/value (per dati di feature specifiche) ──────────────

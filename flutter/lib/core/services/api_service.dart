@@ -110,6 +110,8 @@ class ApiService extends GetxService {
     required String kind,
     required String mode,
     bool normalize = true,
+    bool denoise = false,
+    double gainDb = 0.0,
     String? title,
     void Function(int sent, int total)? onProgress,
   }) async {
@@ -118,6 +120,9 @@ class ApiService extends GetxService {
       'kind': kind,
       'mode': mode,
       'normalize': normalize ? '1' : '0',
+      'denoise': denoise ? '1' : '0',
+      // gain in dB con 1 decimale; il server lo applica solo se != 0
+      'gain_db': gainDb.toStringAsFixed(1),
       if (title != null && title.isNotEmpty) 'title': title,
     });
     final r = await _dio.post(

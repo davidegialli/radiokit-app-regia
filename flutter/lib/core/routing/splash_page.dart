@@ -27,6 +27,12 @@ class _SplashPageState extends State<SplashPage> {
   Future<void> _route() async {
     final storage = StorageService.to;
     if (storage.isAuthenticated) {
+      // Gate prova scaduta: se l'ultimo expires_at noto è passato, blocca.
+      // Fail-open: senza data nota non blocca (vedi StorageService.isTrialExpired).
+      if (storage.isTrialExpired) {
+        Get.offAllNamed(AppRoutes.trialExpired);
+        return;
+      }
       // Fire-and-forget: il routing non aspetta il VPS.
       // Se il WS non si connette in 5s, l'app entra comunque in modalità degraded.
       WsService.to.connect().timeout(const Duration(seconds: 5),

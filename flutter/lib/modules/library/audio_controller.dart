@@ -13,6 +13,7 @@ import 'package:permission_handler/permission_handler.dart';
 import '../../core/services/api_service.dart';
 import '../../core/services/status_service.dart';
 import '../../shared/widgets/rk_toast.dart';
+import 'voice_fx.dart';
 
 /// Tipo di audio gestito dalla tab.
 /// - voice  = parlato registrato dal mic (normalizzato lato server, serve nome)
@@ -46,8 +47,26 @@ class AudioController extends GetxController {
   final titleCtrl = TextEditingController();
   final title = ''.obs;
 
-  // Settings
+  // Settings (solo voce). denoise/gain sono applicati ON-DEVICE (ffmpeg in app)
+  // così l'anteprima riflette il risultato finale; normalize resta lato VPS
+  // quando non ci sono altri effetti attivi.
   final normalize = true.obs;
+  final denoise = false.obs;        // riduzione rumore di fondo (on-device)
+  final gainDb = 0.0.obs;           // guadagno volume in dB, range -12..+12
+
+  // Elaborazione on-device (riduzione rumore + volume) in corso
+  final processing = false.obs;
+  final _processedPath = RxnString();
+  String _processedSig = '';
+
+  // Preview playback state (per seek-bar)
+  final previewPos = Duration.zero.obs;
+  final previewDur = Duration.zero.obs;
+  final previewPlaying = false.obs;
+  StreamSubscription<Duration>? _posSub;
+  StreamSubscription<Duration>? _durSub;
+  StreamSubscription<void>? _completeSub;
+  StreamSubscription<PlayerState>? _stateSub;
 
   // Storico ultimi invii (sessione corrente)
   // [{filename, kind, file_id, status, sent_at, error}]
@@ -65,11 +84,24 @@ class AudioController extends GetxController {
   void onInit() {
     super.onInit();
     titleCtrl.addListener(() => title.value = titleCtrl.text);
+    // Stream posizione/durata/stato del player per la seek-bar di preview.
+    _posSub = _player.onPositionChanged.listen((d) => previewPos.value = d);
+    _durSub = _player.onDurationChanged.listen((d) => previewDur.value = d);
+    _stateSub = _player.onPlayerStateChanged
+        .listen((s) => previewPlaying.value = s == PlayerState.playing);
+    _completeSub = _player.onPlayerComplete.listen((_) {
+      previewPlaying.value = false;
+      previewPos.value = Duration.zero;
+    });
   }
 
   @override
   void onClose() {
     _recTimer?.cancel();
+    _posSub?.cancel();
+    _durSub?.cancel();
+    _completeSub?.cancel();
+    _stateSub?.cancel();
     titleCtrl.dispose();
     _player.dispose();
     if (_recorderOpen) {
@@ -191,12 +223,83 @@ class AudioController extends GetxController {
     }
   }
 
-  // ── Preview ──────────────────────────────────────────────────────────
+  // ── Elaborazione on-device (riduzione rumore + volume) ───────────────
+  /// True se ci sono effetti da applicare (solo sul parlato).
+  bool get _fxActive =>
+      kind.value == AudioKind.voice &&
+      (denoise.value || gainDb.value.abs() >= 0.1);
+
+  String _fxSig() =>
+      '${filePath.value}|d=${denoise.value}|n=${normalize.value}|g=${gainDb.value.toStringAsFixed(1)}';
+
+  /// Ritorna il path del file da riprodurre/inviare: quello elaborato se ci
+  /// sono effetti attivi (con cache per firma), altrimenti il file originale.
+  Future<String?> _ensureProcessed() async {
+    final src = filePath.value;
+    if (src == null) return null;
+    if (!_fxActive) {
+      _processedPath.value = null;
+      _processedSig = '';
+      return src;
+    }
+    final sig = _fxSig();
+    if (_processedPath.value != null && _processedSig == sig) {
+      return _processedPath.value;
+    }
+    processing.value = true;
+    try {
+      final tag = sig.hashCode.toUnsigned(32).toRadixString(16);
+      final out = await VoiceFx.process(
+        inputPath: src,
+        denoise: denoise.value,
+        normalize: normalize.value, // include loudnorm on-device se attivo
+        gainDb: gainDb.value,
+        tag: tag,
+      );
+      if (out != null) {
+        _processedPath.value = out;
+        _processedSig = sig;
+        return out;
+      }
+      // Fallback al grezzo se ffmpeg fallisce
+      lastError.value = 'audio.err.fx_failed'.tr;
+      RkToast.show('audio.err.fx_failed'.tr, kind: RkToastKind.error);
+      return src;
+    } finally {
+      processing.value = false;
+    }
+  }
+
+  /// True se il file da inviare è già stato elaborato on-device (così il
+  /// server NON deve ri-normalizzarlo).
+  bool get processedOnDevice =>
+      _fxActive && _processedPath.value != null;
+
+  // ── Preview (play/pause/seek) ────────────────────────────────────────
+  /// Toggle play/pausa. Riprende dalla posizione corrente se in pausa,
+  /// altrimenti (ri)parte dall'inizio elaborando il file se servono effetti.
+  Future<void> togglePreview() async {
+    if (filePath.value == null) return;
+    try {
+      if (previewPlaying.value) {
+        await _player.pause();
+      } else if (previewPos.value > Duration.zero &&
+                 previewPos.value < previewDur.value) {
+        await _player.resume();
+      } else {
+        await playPreview();
+      }
+    } catch (e) {
+      lastError.value = e.toString();
+    }
+  }
+
   Future<void> playPreview() async {
-    final p = filePath.value;
+    final p = await _ensureProcessed(); // applica effetti on-device se attivi
     if (p == null) return;
     try {
       await _player.stop();
+      previewPos.value = Duration.zero;
       await _player.play(DeviceFileSource(p));
     } catch (e) {
       lastError.value = e.toString();
@@ -205,6 +308,12 @@ class AudioController extends GetxController {
 
   Future<void> stopPreview() async {
     try { await _player.stop(); } catch (_) {}
+    previewPlaying.value = false;
+    previewPos.value = Duration.zero;
+  }
+
+  Future<void> seekPreview(Duration to) async {
+    try { await _player.seek(to); previewPos.value = to; } catch (_) {}
   }
 
   // ── Reset (dopo invio o annulla) ─────────────────────────────────────
@@ -214,6 +323,13 @@ class AudioController extends GetxController {
       // Best-effort delete locale (era nel temp dir o pickato)
       try { File(p).delete(); } catch (_) {}
     }
+    final proc = _processedPath.value;
+    if (proc != null && proc != p) {
+      try { File(proc).delete(); } catch (_) {}
+    }
+    _processedPath.value = null;
+    _processedSig = '';
+    try { _player.stop(); } catch (_) {}
     filePath.value = null;
     fileName.value = null;
     fileSize.value = 0;
@@ -223,6 +339,12 @@ class AudioController extends GetxController {
     lastError.value = null;
     titleCtrl.clear();
     title.value = '';
+    // Reset controlli audio + stato preview
+    denoise.value = false;
+    gainDb.value = 0.0;
+    previewPos.value = Duration.zero;
+    previewDur.value = Duration.zero;
+    previewPlaying.value = false;
   }
 
   // ── Send → upload VPS ────────────────────────────────────────────────
@@ -249,16 +371,26 @@ class AudioController extends GetxController {
       AudioKind.spot   => 'spot',
     };
 
+    // Elabora on-device (riduzione rumore + volume) se attivo; in caso di
+    // errore ffmpeg si torna automaticamente al file grezzo.
+    final sendPath = await _ensureProcessed() ?? p;
+    final processedHere = processedOnDevice; // true → file mp3 già lavorato
+    // Estensione reale del file inviato (mp3 se elaborato on-device).
+    final sentExt = sendPath.contains('.')
+        ? sendPath.substring(sendPath.lastIndexOf('.'))
+        : (n.contains('.') ? n.substring(n.lastIndexOf('.')) : '');
+
     // Se l'utente ha dato un titolo, usalo anche come NOME FILE inviato: così
     // RadioBOSS lo mostra nella playlist (oltre al tag in onda gestito dal
-    // bridge). Senza titolo resta il nome auto (voice_<ts> / file pickato).
-    String uploadName = n;
+    // bridge). Senza titolo resta il nome auto (voice_<ts> / file pickato),
+    // ma con estensione coerente col file realmente inviato.
+    final baseNoExt = n.contains('.') ? n.substring(0, n.lastIndexOf('.')) : n;
+    String uploadName = processedHere ? '$baseNoExt$sentExt' : n;
     if (effectiveTitle.isNotEmpty) {
-      final ext = n.contains('.') ? n.substring(n.lastIndexOf('.')) : '';
       final safe = effectiveTitle
           .replaceAll(RegExp(r'[^A-Za-z0-9 _\-.()À-ÿ]'), '_')
           .trim();
-      if (safe.isNotEmpty) uploadName = '$safe$ext';
+      if (safe.isNotEmpty) uploadName = '$safe$sentExt';
     }
 
     final entry = <String, dynamic>{
@@ -271,15 +403,19 @@ class AudioController extends GetxController {
     history.insert(0, entry);
 
     try {
-      // Normalize SOLO per voce. Jingle e spot sono pre-prodotti — file
-      // transfer puro, niente ffmpeg lato server.
-      final useNormalize = (kind.value == AudioKind.voice) && normalize.value;
+      // Normalize SOLO per voce e SOLO se non già elaborato on-device
+      // (riduzione rumore/volume includono il loudnorm quando attivi → il
+      // server non deve ri-normalizzare). Jingle/spot: file transfer puro.
+      final isVoice = kind.value == AudioKind.voice;
+      final useNormalize = isVoice && normalize.value && !processedHere;
       final r = await ApiService.to.audioUpload(
-        filePath: p,
+        filePath: sendPath,
         filename: uploadName,
         kind: kindStr,
         mode: 'endtrack',
         normalize: useNormalize,
+        denoise: false, // riduzione rumore applicata on-device
+        gainDb: 0.0,    // volume applicato on-device
         title: effectiveTitle.isEmpty ? null : effectiveTitle,
         onProgress: (sent, total) {
           if (total > 0) uploadProgress.value = sent / total;

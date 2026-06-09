@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -68,6 +70,10 @@ class _SourceCard extends StatelessWidget {
             Text(c.fmtRecTime(),
               style: const TextStyle(fontFamily: 'GeistMono', fontSize: 18, color: AppColors.text, fontWeight: FontWeight.w600)),
           ]),
+          const SizedBox(height: 12),
+          // Onda animata: comunica chiaramente "sta registrando" (decorativa,
+          // affidabile su tutti i device — non dipende dai dB reali del mic).
+          const _RecWave(),
           const SizedBox(height: 14),
           Row(children: [
             Expanded(child: _BigBtn(
@@ -140,20 +146,70 @@ class _PreviewCard extends StatelessWidget {
       if (!c.hasFile || c.stage.value == AudioStage.recording) {
         return const SizedBox.shrink();
       }
+      final durMs = c.previewDur.value.inMilliseconds;
+      final maxMs = durMs > 0 ? durMs.toDouble() : 1.0;
+      final posMs = c.previewPos.value.inMilliseconds
+          .clamp(0, maxMs.toInt()).toDouble();
       return RkCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text('audio.preview'.tr,
           style: const TextStyle(fontFamily: 'GeistMono', fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.text2, letterSpacing: 1.2)),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         Row(children: [
-          Expanded(child: _BigBtn(
-            icon: Icons.play_arrow, label: 'audio.play'.tr,
-            onTap: c.playPreview, primary: true,
-          )),
+          // Play/Pausa tondo
+          GestureDetector(
+            onTap: c.processing.value ? null : c.togglePreview,
+            child: Container(
+              width: 46, height: 46,
+              decoration: BoxDecoration(
+                color: AppColors.accent.withOpacity(0.14),
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.accent.withOpacity(0.4)),
+              ),
+              child: c.processing.value
+                  ? const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2, color: AppColors.accent),
+                    )
+                  : Icon(
+                      c.previewPlaying.value ? Icons.pause : Icons.play_arrow,
+                      size: 26, color: AppColors.accent),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(child: Column(children: [
+            SliderTheme(
+              data: SliderTheme.of(context).copyWith(
+                trackHeight: 3,
+                activeTrackColor: AppColors.accent,
+                inactiveTrackColor: AppColors.surface2,
+                thumbColor: AppColors.accent,
+                overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
+                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+              ),
+              child: Slider(
+                value: posMs,
+                max: maxMs,
+                onChanged: durMs > 0
+                    ? (v) => c.seekPreview(Duration(milliseconds: v.toInt()))
+                    : null,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                Text(_fmtDur(c.previewPos.value),
+                  style: const TextStyle(fontFamily: 'GeistMono', fontSize: 10, color: AppColors.text3)),
+                Text(_fmtDur(c.previewDur.value),
+                  style: const TextStyle(fontFamily: 'GeistMono', fontSize: 10, color: AppColors.text3)),
+              ]),
+            ),
+          ])),
           const SizedBox(width: 8),
-          Expanded(child: _BigBtn(
-            icon: Icons.stop, label: 'audio.stop'.tr,
+          GestureDetector(
             onTap: c.stopPreview,
-          )),
+            child: const Icon(Icons.stop_circle_outlined, size: 26, color: AppColors.text3),
+          ),
         ]),
       ]));
     });
@@ -234,6 +290,50 @@ class _SendCard extends StatelessWidget {
                 style: const TextStyle(fontFamily: 'GeistMono', fontSize: 9, color: AppColors.text3, letterSpacing: 0.05)),
             ])),
           ]),
+          const SizedBox(height: 6),
+          // Riduzione rumore — toggle (ffmpeg afftdn/highpass lato VPS)
+          Row(children: [
+            Switch(
+              value: c.denoise.value,
+              onChanged: uploading ? null : (v) => c.denoise.value = v,
+              activeColor: AppColors.accent,
+            ),
+            const SizedBox(width: 4),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('audio.denoise'.tr,
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.text)),
+              const SizedBox(height: 1),
+              Text('audio.denoise.hint'.tr,
+                style: const TextStyle(fontFamily: 'GeistMono', fontSize: 9, color: AppColors.text3, letterSpacing: 0.05)),
+            ])),
+          ]),
+          const SizedBox(height: 10),
+          // Volume / guadagno — slider -12..+12 dB
+          Row(children: [
+            const Icon(Icons.volume_up, size: 18, color: AppColors.text3),
+            const SizedBox(width: 8),
+            Text('audio.gain'.tr,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.text)),
+            const Spacer(),
+            Text(
+              '${c.gainDb.value > 0 ? '+' : ''}${c.gainDb.value.toStringAsFixed(0)} dB',
+              style: const TextStyle(fontFamily: 'GeistMono', fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.accent)),
+          ]),
+          SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              trackHeight: 3,
+              activeTrackColor: AppColors.accent,
+              inactiveTrackColor: AppColors.surface2,
+              thumbColor: AppColors.accent,
+              overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
+              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+            ),
+            child: Slider(
+              value: c.gainDb.value.clamp(-12.0, 12.0),
+              min: -12, max: 12, divisions: 24,
+              onChanged: uploading ? null : (v) => c.gainDb.value = v,
+            ),
+          ),
         ] else ...[
           const SizedBox(height: 8),
           // Hint per jingle/spot: niente modifica
@@ -368,6 +468,11 @@ class _HistoryRow extends StatelessWidget {
 }
 
 // ─── widget helpers ─────────────────────────────────────────
+String _fmtDur(Duration d) {
+  final s = d.inSeconds;
+  return '${(s ~/ 60).toString().padLeft(2, '0')}:${(s % 60).toString().padLeft(2, '0')}';
+}
+
 class _BigBtn extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -469,6 +574,67 @@ class _RecPulseState extends State<_RecPulse>
           color: AppColors.accent.withOpacity(0.3 + 0.7 * _ctrl.value),
           shape: BoxShape.circle,
         ),
+      ),
+    );
+  }
+}
+
+// ─── Onda animata in registrazione (decorativa, affidabile) ──
+class _RecWave extends StatefulWidget {
+  const _RecWave();
+  @override
+  State<_RecWave> createState() => _RecWaveState();
+}
+
+class _RecWaveState extends State<_RecWave>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  // 28 barre con fasi/velocità diverse → moto organico (no random per build stabile).
+  static const int _bars = 28;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1100),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 36,
+      child: AnimatedBuilder(
+        animation: _ctrl,
+        builder: (_, __) {
+          final t = _ctrl.value * 2 * math.pi;
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: List.generate(_bars, (i) {
+              // Combinazione di due seni a frequenze diverse per barra → onda viva.
+              final phase = i * 0.55;
+              final v = (math.sin(t + phase) * 0.5 +
+                         math.sin(t * 1.7 + phase * 0.7) * 0.5);
+              final h = 4.0 + (v.abs()) * 28.0;
+              return Container(
+                width: 3,
+                height: h,
+                decoration: BoxDecoration(
+                  color: AppColors.accent.withOpacity(0.45 + 0.45 * v.abs()),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              );
+            }),
+          );
+        },
       ),
     );
   }

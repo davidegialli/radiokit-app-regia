@@ -27,6 +27,7 @@ class AppConstants {
   static const String storageKeyServices = 'rkr_services';
   static const String storageKeyRadioId  = 'rkr_radio_id';
   static const String storageKeyUserName = 'rkr_user_name';
+  static const String storageKeyLicenseExpires = 'rkr_license_expires'; // ISO/MySQL datetime
 
   // Lingue supportate (allineate al sito radiokit.io)
   static const List<String> supportedLocales = ['it', 'en', 'fr', 'es'];

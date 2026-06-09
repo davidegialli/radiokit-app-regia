@@ -34,6 +34,7 @@ class ActivationController extends GetxController {
       storage.jwt        = token;
       storage.radioId    = r['radio_id'] as String?;
       storage.userName   = r['user_name'] as String?;
+      storage.licenseExpires = r['expires_at'] as String?; // per il gate prova scaduta
       storage.services   = ((r['services'] as List?)?.cast<String>()) ?? const [];
 
       final bridges = ((r['bridges_online'] as List?)?.cast<String>()) ?? const [];
